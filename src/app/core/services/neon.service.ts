@@ -39,7 +39,7 @@ export class NeonService {
     private _neon: any = Neon2;
     private _neonWallet: any = wallet2;
     private _neonTx: any = tx2;
-    private _neonRpc: any = rpc2;
+    public _neonRpc: any = rpc2;
     // 创建导入钱包的链
     private _selectedNeon: any = Neon2;
     private _selectedNeonWallet: any = wallet2;

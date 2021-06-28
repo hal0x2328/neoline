@@ -150,7 +150,6 @@ export class PopupNoticeNeo3TransferComponent implements OnInit, AfterViewInit {
                     this.symbol = filterAsset[0].symbol;
                     this.balance = filterAsset[0];
                     this.submit();
-                    this.getAssetRate();
                 }
             });
         });
@@ -290,15 +289,6 @@ export class PopupNoticeNeo3TransferComponent implements OnInit, AfterViewInit {
         });
     }
 
-    public async getAssetRate() {
-        if (Number(this.fee) > 0) {
-            this.feeMoney = await this.asset.getMoney('GAS', Number(this.fee))
-        }
-        const assetRate = await this.asset.getAssetRate(this.symbol).toPromise();
-        this.money = await this.asset.getMoney(this.symbol, Number(this.amount));
-        this.totalMoney = this.global.mathAdd(Number(this.feeMoney), Number(this.money)).toString();
-    }
-
     public exit() {
         this.chrome.windowCallback({
             error: ERRORS.CANCELLED,
@@ -334,19 +324,7 @@ export class PopupNoticeNeo3TransferComponent implements OnInit, AfterViewInit {
             data: {
                 fee: this.fee
             }
-        }).afterClosed().subscribe(res => {
-            if (res !== false) {
-                this.fee = res;
-                if (res === 0 || res === '0') {
-                    this.feeMoney = '0';
-                } else {
-                    this.asset.getMoney('GAS', Number(this.fee)).then(feeMoney => {
-                        this.feeMoney = feeMoney;
-                        this.totalMoney = this.global.mathAdd(Number(this.feeMoney), Number(this.money)).toString();
-                    });
-                }
-            }
-        })
+        }).afterClosed().subscribe(res => {})
     }
 
     public getAddressSub(address: string) {

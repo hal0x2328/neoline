@@ -5,10 +5,10 @@ import { ChromeService } from '../services/chrome.service';
 import { Observable, Subject, from, of, forkJoin } from 'rxjs';
 import { Asset, Balance, Nep5Detail } from 'src/models/models';
 import { map, switchMap, refCount, publish } from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
 import { GasFeeSpeed } from '@popup/_lib/type';
 import { bignumber } from 'mathjs';
-import { rpc } from '@cityofzion/neon-js';
+import { rpc as rpc2 } from '@cityofzion/neon-js';
+import { rpc as rpc3 } from '@cityofzion/neon-core-neo3';
 import { NeonService } from '../services/neon.service';
 import { NEO3_CONTRACT, GAS3_CONTRACT } from '@popup/_lib';
 
@@ -30,14 +30,15 @@ export class AssetState {
         propose_price: '0.011',
         fast_price: '0.2',
     };
+    public rpcClient;
 
     constructor(
         private http: HttpService,
         private global: GlobalService,
         private chrome: ChromeService,
-        private httpClient: HttpClient,
         private neonService: NeonService
     ) {
+        this.rpcClient = new rpc3.RPCClient('https://neo3-testnet.neoline.vip');
         this.chrome.getAssetFile().subscribe((res) => {
             this.assetFile = res;
         });
@@ -102,35 +103,38 @@ export class AssetState {
     }
 
     public fetchBalance(address: string): Observable<any> {
+        let getBalance = this.rpcClient.getNep17Balances(address);
         if (this.neonService.currentWalletChainType === 'Neo3') {
-            return this.fetchNeo3AddressTokens(address);
+            getBalance = this.rpcClient.getNep17Balances(address);
         }
-        return this.http
-            .get(
-                `${this.global.apiDomain}/v1/neo2/address/assets?address=${address}`
-            )
-            .pipe(
-                map((res) => {
-                    const result = [];
-                    res.asset = res.asset || [];
-                    res.nep5 = res.nep5 || [];
-                    res.asset.forEach((item) => {
-                        result.push(item);
-                    });
-                    res.nep5.forEach((item) => {
-                        result.push(item);
-                    });
-                    return result;
-                })
-            );
+        return forkJoin([getBalance]).pipe(
+            map((res) => {
+                const { balance } = (res[0] as any);
+                const assets = Promise.all(balance.map(async item => {
+                    const { amount, assethash } = item;
+                    const symbolRes = await this.rpcClient.invokeFunction(assethash, 'symbol', []);
+                    const decimalsRes = await this.rpcClient.invokeFunction(assethash, 'decimals', []);
+                    if (symbolRes.state === 'HALT' && decimalsRes.state === 'HALT') {
+                        return {
+                            balance: bignumber(amount).dividedBy(bignumber(10).pow(decimalsRes.stack[0].value)).toFixed(),
+                            asset_id: assethash,
+                            decimals: decimalsRes.stack[0].value,
+                            name: this.base64Decod(symbolRes.stack[0].value),
+                            symbol: this.base64Decod(symbolRes.stack[0].value)
+                        }
+                    }
+                }));
+                return assets;
+            })
+        );
     }
 
     public fetchClaim(address: string): Observable<any> {
         const getClaimable = from(
-            rpc.Query.getClaimable(address).execute(this.global.RPCDomain)
+            rpc2.Query.getClaimable(address).execute(this.global.RPCDomain)
         );
         const getUnclaimed = from(
-            rpc.Query.getUnclaimed(address).execute(this.global.RPCDomain)
+            rpc2.Query.getUnclaimed(address).execute(this.global.RPCDomain)
         );
         return forkJoin([getClaimable, getUnclaimed]).pipe(
             map((res) => {
@@ -211,74 +215,6 @@ export class AssetState {
         return this.http.get(`${this.global.apiDomain}/v1/fiat/rates`);
     }
 
-    public getAssetRate(coins: string): Observable<any> {
-        if (this.neonService.currentWalletChainType === 'Neo3') {
-            return of({});
-        }
-        if (!coins) {
-            return of({});
-        }
-        coins = coins.toLowerCase();
-        const coinsAry = coins.split(',');
-        const rateRes = {};
-        let targetCoins = '';
-        coinsAry.forEach((element) => {
-            const tempAssetRate = this.assetRate.get(element);
-            if (tempAssetRate && tempAssetRate['last-modified']) {
-                rateRes[element] = tempAssetRate['rate'];
-                if (
-                    new Date().getTime() / 1000 -
-                        tempAssetRate['last-modified'] >
-                    1200
-                ) {
-                    targetCoins += element + ',';
-                }
-            } else {
-                targetCoins += element + ',';
-            }
-        });
-        targetCoins = targetCoins.slice(0, -1);
-        if (targetCoins === '') {
-            return of(rateRes);
-        }
-        return forkJoin([this.getRate(), this.getFiatRate()]).pipe(
-            map((result) => {
-                const rateBalance = result[0];
-                const fiatData = result[1];
-                const targetCoinsAry = targetCoins.split(',');
-                targetCoinsAry.forEach((coin) => {
-                    const tempRate = {};
-                    tempRate['last-modified'] = rateBalance['response_time'];
-                    if (coin in rateBalance) {
-                        tempRate['rate'] = bignumber(
-                            rateBalance[coin].price || 0
-                        )
-                            .mul(
-                                bignumber(
-                                    fiatData.rates &&
-                                        fiatData.rates[
-                                            this.rateCurrency.toUpperCase()
-                                        ]
-                                ) || 0
-                            )
-                            .toFixed();
-                        rateRes[coin] = tempRate['rate'];
-                    } else {
-                        tempRate['rate'] = undefined;
-                        rateRes[coin] = undefined;
-                    }
-                    this.assetRate.set(coin, tempRate);
-                });
-                if (this.rateCurrency === 'CNY') {
-                    this.chrome.setAssetCNYRate(this.assetRate);
-                } else {
-                    this.chrome.setAssetUSDRate(this.assetRate);
-                }
-                return rateRes;
-            })
-        );
-    }
-
     public async getAssetImage(asset: Asset) {
         const imageObj = this.assetFile.get(asset.asset_id);
         let lastModified = '';
@@ -315,22 +251,6 @@ export class AssetState {
         return this.http.get(
             `${this.global.apiDomain}/v1/neo2/nep5/${assetId}`
         );
-    }
-
-    public async getMoney(symbol: string, balance: number): Promise<string> {
-        let rate: any;
-        try {
-            rate = await this.getAssetRate(symbol).toPromise();
-        } catch (error) {
-            rate = {};
-        }
-        if (symbol.toLowerCase() in rate) {
-            return this.global
-                .mathmul(Number(rate[symbol.toLowerCase()]), Number(balance))
-                .toString();
-        } else {
-            return '0';
-        }
     }
 
     public getGasFee(): Observable<any> {
@@ -437,4 +357,8 @@ export class AssetState {
         );
     }
     //#endregion
+
+    public base64Decod(value: string): string {
+        return decodeURIComponent(window.atob(value));
+    }
 }

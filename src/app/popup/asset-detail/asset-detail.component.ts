@@ -69,7 +69,6 @@ export class PopupAssetDetailComponent implements OnInit {
         this.chrome.getWatch(this.neon.address, this.neon.currentWalletChainType).subscribe((watching) => {
             this.findBalance(balanceRes, watching);
             // 获取资产汇率
-            this.getAssetRate();
         });
     }
 
@@ -79,32 +78,6 @@ export class PopupAssetDetailComponent implements OnInit {
             watching.find((w) => w.asset_id === this.assetId);
         balance.balance = Number(balance.balance);
         this.balance = balance;
-    }
-
-    getAssetRate() {
-        if (
-            this.balance.balance &&
-            bignumber(this.balance.balance).comparedTo(0) > 0
-        ) {
-            this.assetState
-                .getAssetRate(this.balance.symbol)
-                .subscribe((rateBalance) => {
-                    if (this.balance.symbol.toLowerCase() in rateBalance) {
-                        this.balance.rateBalance =
-                            bignumber(
-                                rateBalance[
-                                    this.balance.symbol.toLowerCase()
-                                ] || '0'
-                            )
-                                .mul(bignumber(this.balance.balance))
-                                .toNumber() || 0;
-                    } else {
-                        this.balance.rateBalance = 0;
-                    }
-                });
-        } else {
-            this.balance.rateBalance = 0;
-        }
     }
 
     public onScrolltaChange(el: Element) {

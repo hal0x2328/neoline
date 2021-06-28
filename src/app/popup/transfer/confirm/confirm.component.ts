@@ -86,7 +86,6 @@ export class PopupTransferConfirmComponent implements OnInit {
         }
         this.net = this.global.net;
         this.getSymbol();
-        this.getAssetRate();
     }
 
     private async getSymbol() {
@@ -105,36 +104,6 @@ export class PopupTransferConfirmComponent implements OnInit {
         }
     }
 
-    public async getAssetRate() {
-        const getFeeMoney = this.getMoney('GAS', Number(this.data.fee));
-        const getTransferMoney = this.getMoney(this.symbol, Number(this.data.amount));
-        const getSystemFeeMoney = this.getMoney('GAS', this.data.systemFee || 0);
-        const getNetworkFeeMoney = this.getMoney('GAS', this.data.networkFee || 0);
-        this.totalFee = bignumber(this.data.fee).add(this.data.systemFee || 0).add(this.data.networkFee || 0);
-        forkJoin([getFeeMoney, getSystemFeeMoney, getNetworkFeeMoney, getTransferMoney]).subscribe(res => {
-            this.feeMoney = res[0];
-            this.systemFeeMoney = res[1];
-            this.networkFeeMoney = res[2];
-            this.money = res[3];
-            this.totalMoney = bignumber(this.feeMoney).add(this.systemFeeMoney).add(this.networkFeeMoney).add(this.money);
-        });
-    }
-
-    public async getMoney(symbol: string, balance: number): Promise<string> {
-        return new Promise((mResolve) => {
-            if (balance == 0) {
-                mResolve('0');
-            }
-            this.assetState.getAssetRate(symbol).subscribe(rate => {
-                if (symbol.toLowerCase() in rate) {
-                    mResolve(this.global.mathmul(Number(rate[symbol.toLowerCase()]), Number(balance)).toString());
-                } else {
-                    mResolve('0');
-                }
-            });
-        })
-    }
-
     public editFee() {
         this.dialog.open(PopupEditFeeDialogComponent, {
             panelClass: 'custom-dialog-panel',
@@ -145,11 +114,6 @@ export class PopupTransferConfirmComponent implements OnInit {
             if (res !== false) {
                 this.data.fee = res;
                 this.datajson.fee = res;
-                this.assetState.getMoney('GAS', Number(this.data.fee)).then(feeMoney => {
-                    this.feeMoney = feeMoney;
-                    this.totalFee = bignumber(this.data.fee).add(this.data.systemFee || 0).add(this.data.networkFee || 0);
-                    this.totalMoney = bignumber(this.feeMoney).add(this.systemFeeMoney).add(this.networkFeeMoney).add(this.money);
-                });
             }
         })
     }

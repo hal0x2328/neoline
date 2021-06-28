@@ -85,11 +85,6 @@ export class PopupNoticeInvokeComponent implements OnInit {
                     this.pramsData[key] = tempObject;
                 }
             }
-            if (Number(this.pramsData.fee) > 0) {
-                this.assetState.getMoney('GAS', Number(this.pramsData.fee)).then(res => {
-                    this.feeMoney = res;
-                })
-            }
             this.dataJson = this.pramsData
             this.dataJson.messageID = undefined;
             this.triggerContractVerification = params.triggerContractVerification !== undefined
@@ -542,20 +537,7 @@ export class PopupNoticeInvokeComponent implements OnInit {
                 minFee: this.minFee
             }
         }).afterClosed().subscribe(res => {
-            if (res !== false) {
-                this.fee = res;
-                if (res < this.minFee) {
-                    this.fee = this.minFee;
-                }
-                if (res === 0 || res === '0') {
-                    this.feeMoney = '0';
-                } else {
-                    this.assetState.getMoney('GAS', Number(this.fee)).then(feeMoney => {
-                        this.feeMoney = feeMoney;
-                    });
-                }
-                this.signTx();
-            }
+            this.signTx();
         })
     }
 

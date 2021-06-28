@@ -118,7 +118,6 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
             // 获取资产头像
             this.getAssetSrc();
             // 获取资产汇率
-            this.getAssetRate();
         });
     }
 
@@ -127,7 +126,6 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
         this.chrome.getWatch(this.address, this.neon.currentWalletChainType).subscribe(watching => {
             this.findBalance(balanceRes, watching);
             // 获取资产汇率
-            this.getAssetRate();
         });
     }
 
@@ -139,21 +137,6 @@ export class AssetDetailComponent implements OnInit, OnDestroy {
         }
         balance.balance = Number(balance.balance);
         this.balance = balance;
-    }
-
-    public getAssetRate() {
-        if (this.balance !== undefined && this.balance.balance && bignumber(this.balance.balance).comparedTo(0) === 1) {
-            this.asset.getAssetRate(this.balance.symbol).subscribe(rateBalance => {
-                if (this.balance.symbol.toLowerCase() in rateBalance) {
-                    this.balance.rateBalance = bignumber(rateBalance[this.balance.symbol.toLowerCase()] || '0')
-                        .mul(bignumber(this.balance.balance)).toNumber();
-                }
-            });
-        } else {
-            if (this.balance !== undefined) {
-                this.balance.rateBalance = 0;
-            }
-        }
     }
 
     public getAssetSrc() {

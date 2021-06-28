@@ -143,7 +143,6 @@ export class PopupNoticeTransferComponent implements OnInit, AfterViewInit {
                     this.symbol = res.symbol;
                     this.balance = res;
                     this.submit();
-                    this.getAssetRate();
                 });
             } else {
                 this.asset.fetchBalance(this.neon.address).subscribe(res => {
@@ -157,7 +156,6 @@ export class PopupNoticeTransferComponent implements OnInit, AfterViewInit {
                         return;
                     }
                     this.submit();
-                    this.getAssetRate();
                 });
             }
         });
@@ -314,15 +312,6 @@ export class PopupNoticeTransferComponent implements OnInit, AfterViewInit {
         });
     }
 
-    public async getAssetRate() {
-        if (Number(this.fee) > 0) {
-            this.feeMoney = await this.asset.getMoney('GAS', Number(this.fee))
-        }
-        const assetRate = await this.asset.getAssetRate(this.symbol).toPromise();
-        this.money = await this.asset.getMoney(this.symbol, Number(this.amount));
-        this.totalMoney = this.global.mathAdd(Number(this.feeMoney), Number(this.money)).toString();
-    }
-
     public exit() {
         this.chrome.windowCallback({
             error: ERRORS.CANCELLED,
@@ -360,15 +349,6 @@ export class PopupNoticeTransferComponent implements OnInit, AfterViewInit {
             }
         }).afterClosed().subscribe(res => {
             if (res !== false) {
-                this.fee = res;
-                if (res === 0 || res === '0') {
-                    this.feeMoney = '0';
-                } else {
-                    this.asset.getMoney('GAS', Number(this.fee)).then(feeMoney => {
-                        this.feeMoney = feeMoney;
-                        this.totalMoney = this.global.mathAdd(Number(this.feeMoney), Number(this.money)).toString();
-                    });
-                }
                 this.submit();
             }
         })

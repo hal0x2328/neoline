@@ -81,11 +81,6 @@ export class PopupNoticeInvokeMultiComponent implements OnInit {
                     this.pramsData[key] = tempObject;
                 }
             }
-            if (Number(this.pramsData.fee) > 0) {
-                this.assetState.getMoney('GAS', Number(this.pramsData.fee)).then(res => {
-                    this.feeMoney = res;
-                })
-            }
             this.dataJson = this.pramsData
             this.dataJson.messageID = undefined;
             this.pramsData.invokeArgs.forEach((item, index) => {
@@ -580,21 +575,6 @@ export class PopupNoticeInvokeMultiComponent implements OnInit {
                 minFee: this.minFee
             }
         }).afterClosed().subscribe(res => {
-            console.log(res);
-            if (res !== false) {
-                console.log(res);
-                this.fee = res;
-                if (res < this.minFee) {
-                    this.fee = this.minFee;
-                }
-                if (res === 0 || res === '0') {
-                    this.feeMoney = '0';
-                } else {
-                    this.assetState.getMoney('GAS', Number(this.fee)).then(feeMoney => {
-                        this.feeMoney = feeMoney;
-                    });
-                }
-            }
             this.signTx();
         })
     }

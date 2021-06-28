@@ -64,11 +64,6 @@ export class PopupNoticeDeployComponent implements OnInit {
                     });
                 }
             }
-            if (Number(this.pramsData.fee) > 0) {
-                this.assetState.getMoney('GAS', Number(this.fee)).then(res => {
-                    this.feeMoney = res;
-                })
-            }
             if (params.network !== undefined) {
                 if (params.network === 'MainNet') {
                     this.global.modifyNet('MainNet');
@@ -287,14 +282,6 @@ export class PopupNoticeDeployComponent implements OnInit {
             }
         }).afterClosed().subscribe(res => {
             if (res !== false) {
-                this.fee = res.toString();
-                if (res === 0 || res === '0') {
-                    this.feeMoney = '0';
-                } else {
-                    this.assetState.getMoney('GAS', Number(this.fee)).then(feeMoney => {
-                        this.feeMoney = feeMoney;
-                    });
-                }
                 this.signTx();
             }
         })

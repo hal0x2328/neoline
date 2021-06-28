@@ -13,7 +13,7 @@ import {
     GlobalService,
     ChromeService
 } from '@/app/core';
-import { NEO, Balance, Asset, GAS } from '@/models/models';
+import { NEO, Balance, Asset } from '@/models/models';
 import { TransferService } from '@/app/transfer/transfer.service';
 import { Wallet as Wallet2 } from '@cityofzion/neon-core/lib/wallet';
 import { Wallet as Wallet3 } from '@cityofzion/neon-core-neo3/lib/wallet';
@@ -22,7 +22,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { PopupConfirmDialogComponent } from '../_dialogs';
 import { Router } from '@angular/router';
 import { rpc } from '@cityofzion/neon-core';
-import { bignumber } from 'mathjs';
 import { NEO3_CONTRACT } from '../_lib';
 
 
@@ -100,7 +99,8 @@ export class PopupHomeComponent implements OnInit {
     getAssetList() {
         this.assetState
             .fetchBalance(this.wallet.accounts[0].address)
-            .subscribe(balanceArr => {
+            .subscribe(async balanceArr => {
+                balanceArr = await balanceArr;
                 this.handlerBalance(balanceArr);
                 this.chrome.getWatch(this.neon.address, this.neon.currentWalletChainType).subscribe(watching => {
                     this.assetList = [];
@@ -113,7 +113,6 @@ export class PopupHomeComponent implements OnInit {
                         this.assetList.push(r);
                     });
                     rateSymbol = rateSymbol.slice(0, -1);
-                    this.getAssetListRate(rateSymbol);
                     //  去重
                     this.assetList.forEach(asset => {
                         if(asset.is_risk !== true || watching.findIndex(item => item.asset_id === asset.asset_id)) {
@@ -135,22 +134,6 @@ export class PopupHomeComponent implements OnInit {
                     })
                 });
             });
-    }
-
-    // 获取资产汇率
-    getAssetListRate(rateSymbol: string) {
-        this.assetState.getAssetRate(rateSymbol).subscribe(rateBalance => {
-            this.assetList.map(d => {
-                if (d.symbol.toLowerCase() in rateBalance) {
-                    try {
-                        d.rateBalance = bignumber(rateBalance[d.symbol.toLowerCase()] || '0').mul(bignumber(d.balance)).toNumber();
-                    } catch (error) {
-                        d.rateBalance = 0;
-                    }
-                }
-                return d;
-            });
-        });
     }
 
     public getAssetSrc(asset: Asset, index) {
@@ -199,7 +182,6 @@ export class PopupHomeComponent implements OnInit {
             // 获取交易
             // this.getInTransactions(1);
             // 获取资产汇率
-            this.getAssetRate();
         });
     }
 
@@ -215,24 +197,6 @@ export class PopupHomeComponent implements OnInit {
         }
         balance.balance = Number(balance.balance);
         this.balance = balance;
-    }
-
-    public getAssetRate() {
-        if (this.balance.balance && bignumber(this.balance.balance ).comparedTo(0) === 1) {
-            this.assetState
-                .getAssetRate(this.balance.symbol)
-                .subscribe(rateBalance => {
-                    if (this.balance.symbol.toLowerCase() in rateBalance) {
-                        this.balance.rateBalance =
-                            (rateBalance[this.balance.symbol.toLowerCase()] || 0) *
-                            bignumber(this.balance.balance || 0 ).toNumber();
-                    } else {
-                        this.balance.rateBalance = 0;
-                    }
-                });
-        } else {
-            this.balance.rateBalance = 0;
-        }
     }
 
     public claim() {

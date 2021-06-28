@@ -101,7 +101,7 @@ export class TransferCreateComponent implements OnInit {
                 });
             }
             this.asset.fetchBalance(this.neon.address).subscribe(async balanceArr => {
-                this.balances = balanceArr;
+                this.balances = await balanceArr;
                 if (!params.id) {
                     this.assetId = this.balances[0].asset_id;
                     this.chooseAsset = this.balances[0];

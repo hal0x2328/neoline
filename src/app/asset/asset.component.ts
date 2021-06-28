@@ -74,7 +74,6 @@ export class AssetComponent implements OnInit, OnDestroy {
             this.displayAssets.push(r);
         });
         this.rateSymbol = this.rateSymbol.slice(0, -1);
-        this.getAssetRate();
         this.chrome.getWatch(this.address, this.neon.currentWalletChainType).subscribe((watching) => {
             const newWatch = [];
             watching.forEach((w) => {
@@ -86,19 +85,6 @@ export class AssetComponent implements OnInit, OnDestroy {
             });
             this.watch = newWatch;
             this.displayAssets.push(...newWatch);
-        });
-    }
-
-    // 获取资产汇率
-    public getAssetRate() {
-        this.asset.getAssetRate(this.rateSymbol).subscribe((rateBalance) => {
-            this.displayAssets.map((d) => {
-                if (d.symbol.toLowerCase() in rateBalance) {
-                    d.rateBalance =
-                        (rateBalance[d.symbol.toLowerCase()] || 0) * d.balance;
-                }
-                return d;
-            });
         });
     }
 

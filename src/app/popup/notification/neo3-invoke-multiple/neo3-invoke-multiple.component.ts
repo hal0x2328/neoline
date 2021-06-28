@@ -70,11 +70,6 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
                     hostname: undefined,
                 };
                 this.pramsData = params;
-                if (Number(this.pramsData.fee) > 0) {
-                    this.assetState.getMoney('GAS', Number(this.pramsData.fee)).then(res => {
-                        this.feeMoney = res;
-                    });
-                };
                 this.pramsData.invokeArgs.forEach(item => {
                     item = this.neo3Invoke.createInvokeInputs(item);
                     this.invokeArgs.push({
@@ -112,33 +107,6 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
                 ID: this.messageID
             });
         };
-    }
-    public async getAssetRate() {
-        const getFeeMoney = this.getMoney('GAS', Number(this.fee));
-        const getSystemFeeMoney = this.getMoney('GAS', this.systemFee || 0);
-        const getNetworkFeeMoney = this.getMoney('GAS', this.networkFee || 0);
-        this.totalFee = bignumber(this.fee).add(this.systemFee || 0).add(this.networkFee || 0);
-        forkJoin([getFeeMoney, getSystemFeeMoney, getNetworkFeeMoney]).subscribe(res => {
-            this.feeMoney = res[0];
-            this.systemFeeMoney = res[1];
-            this.networkFeeMoney = res[2];
-            this.totalMoney = bignumber(this.feeMoney).add(this.systemFeeMoney).add(this.networkFeeMoney);
-        });
-    }
-
-    public async getMoney(symbol: string, balance: number): Promise<string> {
-        return new Promise((mResolve) => {
-            if (balance === 0) {
-                mResolve('0');
-            }
-            this.assetState.getAssetRate(symbol).subscribe(rate => {
-                if (symbol.toLowerCase() in rate) {
-                    mResolve(this.global.mathmul(Number(rate[symbol.toLowerCase()]), Number(balance)).toString());
-                } else {
-                    mResolve('0');
-                }
-            });
-        })
     }
 
     private async resolveSign() {
@@ -259,20 +227,7 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
             }
         }).afterClosed().subscribe(res => {
             if (res !== false) {
-                this.fee = res;
-                this.dataJson.fee = res;
-                this.getAssetRate();
                 this.signTx();
-                if (res < this.minFee) {
-                    this.fee = this.minFee;
-                }
-                if (res === 0 || res === '0') {
-                    this.feeMoney = '0';
-                } else {
-                    this.assetState.getMoney('GAS', Number(this.fee)).then(feeMoney => {
-                        this.feeMoney = feeMoney;
-                    });
-                }
             }
         })
     }
@@ -288,7 +243,6 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
                 this.systemFee = unSignTx.systemFee.toString();
                 this.networkFee = unSignTx.networkFee.toString();
                 this.tx = unSignTx;
-                this.getAssetRate();
                 this.resolveSign();
             }, error => {
                 console.log(error);
