@@ -6,8 +6,10 @@ import BN = require('bn.js');
 import SHA256 =  require('crypto-js/sha256');
 import hexEncoding = require('crypto-js/enc-hex');
 import { ChainId, Network, ReqHeaderNetworkType } from './constants';
-import { getLocalStorage } from '../common';
+import { getLocalStorage, getStorage } from '../common';
 import { tx, wallet as wallet3} from '@cityofzion/neon-core-neo3';
+import { getApplicationLog, getBlock, getNep17Balances, getRawTransaction, invokeFunction, getStorageDetails } from './rpcN3';
+import { bignumber } from 'mathjs';
 
 const curve = new ec('p256');
 
@@ -161,9 +163,6 @@ export function str2hexstring(str) {
 
 /**
  * @param str HEX string
-// tslint:disable-next-line: jsdoc-format
-// tslint:disable-next-line: jsdoc-format
-// tslint:disable-next-line: no-redundant-jsdoc
  * @returns
  */
 export function hexstring2ab(str) {
@@ -299,4 +298,44 @@ export function getWalletType() {
             resolve(currChainType);
         }).catch(err => reject(err));
     })
+}
+
+function base64Decod(value: string): string {
+    return decodeURIComponent(window.atob(value));
+}
+
+export async function getN3Balance(address: string): Promise<any>{
+    const { balance } = await getNep17Balances(address);
+    const assets = Promise.all(balance.map(async item => {
+        const { amount, assethash } = item;
+        const symbolRes = await invokeFunction(assethash, 'symbol', []);
+        const decimalsRes = await invokeFunction(assethash, 'decimals', []);
+        if (symbolRes.state === 'HALT' && decimalsRes.state === 'HALT') {
+            return {
+                balance: bignumber(amount).dividedBy(bignumber(10).pow(decimalsRes.stack[0].value)).toFixed(),
+                contract: assethash,
+                decimals: decimalsRes.stack[0].value,
+                name: base64Decod(symbolRes.stack[0].value),
+                symbol: base64Decod(symbolRes.stack[0].value),
+                type: 'nep17'
+            }
+        }
+    }));
+    return assets;
+}
+
+export async function getN3RawTransaction(txid: string): Promise<any> {
+    return getRawTransaction(txid);
+}
+
+export async function getN3Block(blockHeight: number): Promise<any> {
+    return getBlock(blockHeight);
+}
+
+export async function getN3ApplicationLog(txid: string): Promise<any> {
+    return getApplicationLog(txid);
+}
+
+export async function getN3Storage(scriptHash: string, key: string): Promise<any> {
+    return getStorageDetails(scriptHash, key);
 }

@@ -34,12 +34,18 @@ import {
     N3InvokeReadArgs, N3InvokeReadMultiArgs, N3SendArgs , N3TransactionArgs,
     N3VerifyMessageArgs, requestTargetN3
 } from '../common/data_module_neo3';
-import { base64Encode, getNetwork, getPrivateKeyFromWIF, getPublicKeyFromPrivateKey, getReqHeaderNetworkType, getScriptHashFromAddress, getWalletType, hexstring2str, sign, str2hexstring } from '../common/utils';
+import {
+    base64Encode, getN3ApplicationLog, getN3Balance, getN3Block, getN3RawTransaction, getN3Storage, getNetwork, getPrivateKeyFromWIF,
+    getPublicKeyFromPrivateKey, getReqHeaderNetworkType,
+    getScriptHashFromAddress, getWalletType,
+    hexstring2str, sign, str2hexstring
+} from '../common/utils';
 import randomBytes = require('randomBytes');
 import {
     u as u3,
     wallet as wallet3
 } from '@cityofzion/neon-core-neo3/lib';
+import { checkoutN3Network, getRawTransaction, invokeFunction } from '../common/rpcN3';
 
 /**
  * Background methods support.
@@ -244,6 +250,9 @@ export function setNetwork(network, chainId, chainType) {
     currNetwork = network;
     currChainId = chainId;
     currChain = chainType;
+    if (chainId === 4) {
+        checkoutN3Network();
+    }
 }
 
 getLocalStorage('startTime', (time) => {
@@ -492,21 +501,13 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         case requestTarget.ApplicationLog: {
             try {
                 const parameter = request.parameter as TransactionInputArgs;
-                const nodeUrl = RPC.Neo2[parameter.network];
-                httpPost(nodeUrl, {
-                    jsonrpc: '2.0',
-                    method: 'getapplicationlog',
-                    params: [parameter.txid],
-                    id: 1
-                }, (response) => {
-                    windowCallback({
-                        return: requestTarget.ApplicationLog,
-                        data: response.error !== undefined ? null : response.result,
-                        ID: request.ID,
-                        error: response.error === undefined ? null : ERRORS.RPC_ERROR
-                    });
-                    sendResponse('');
-                }, null);
+                const data = await getN3ApplicationLog(parameter.txid);
+                windowCallback({
+                    return: requestTarget.ApplicationLog,
+                    data,
+                    ID: request.ID,
+                    error: null
+                });
             } catch (error) {
                 windowCallback({
                     return: requestTarget.ApplicationLog,
@@ -858,39 +859,25 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         // neo3 dapi method
         case requestTargetN3.Balance: {
             try {
-                // const parameter = request.parameter as N3BalanceArgs;
                 const currWallet = await getLocalStorage('wallet', () => { });
                 const address = currWallet.accounts[0].address;
                 if (!wallet3.isAddress(address)) {
                     return;
                 };
+                const assets = await getN3Balance(address);
                 const postData = [
                     {
                         address,
-                        contracts: []
+                        contracts: assets
                     }
                 ];
-                httpPost(`${mainApi}/v1/neo3/address/balances`, { params: postData }, (response) => {
-                    if (response.status === 'success') {
-                        const returnData = response.data;
-                        windowCallback({
-                            return: requestTargetN3.Balance,
-                            ID: request.ID,
-                            data: returnData,
-                            error: null
-                        });
-                    } else {
-                        windowCallback({
-                            return: requestTargetN3.Balance,
-                            data: null,
-                            ID: request.ID,
-                            error: ERRORS.DEFAULT
-                        });
-                    }
-                    sendResponse('');
-                }, {
-                    Network: getReqHeaderNetworkType(request.parameter.network)
+                windowCallback({
+                    return: requestTargetN3.Balance,
+                    ID: request.ID,
+                    data: postData,
+                    error: null
                 });
+                sendResponse('');
             } catch (error) {
                 windowCallback({
                     return: requestTargetN3.Balance,
@@ -905,28 +892,14 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         case requestTargetN3.Transaction: {
             try {
                 const parameter = request.parameter as N3TransactionArgs;
-                const url = `${mainApi}/v1/neo3/dapi/transaction/${parameter.txid}`;
-                httpGet(url, (response) => {
-                    if (response.status === 'success') {
-                        const returnData = response.data;
-                        windowCallback({
-                            return: requestTargetN3.Transaction,
-                            ID: request.ID,
-                            data: returnData,
-                            error: null
-                        });
-                    } else {
-                        windowCallback({
-                            return: requestTargetN3.Transaction,
-                            data: null,
-                            ID: request.ID,
-                            error: ERRORS.DEFAULT
-                        });
-                    }
-                    sendResponse('');
-                }, {
-                    Network: getReqHeaderNetworkType(request.parameter.network)
+                const data = await getN3RawTransaction(parameter.txid);
+                windowCallback({
+                    return: requestTargetN3.Transaction,
+                    ID: request.ID,
+                    data,
+                    error: null
                 });
+                sendResponse('');
             } catch (error) {
                 windowCallback({
                     return: requestTargetN3.Transaction,
@@ -941,20 +914,14 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         case requestTargetN3.Block: {
             try {
                 const parameter = request.parameter as N3GetBlockInputArgs;
-                httpPost(request.nodeUrl, {
-                    jsonrpc: '2.0',
-                    method: 'getblock',
-                    params: [parameter.blockHeight, 1],
-                    id: 1
-                }, (response) => {
-                    windowCallback({
-                        return: requestTargetN3.Block,
-                        data: response.error !== undefined ? null : response.result,
-                        ID: request.ID,
-                        error: response.error === undefined ? null : ERRORS.RPC_ERROR
-                    });
-                    sendResponse('');
-                }, null);
+                const data = await getN3Block(parameter.blockHeight);
+                windowCallback({
+                    return: requestTargetN3.Block,
+                    data,
+                    ID: request.ID,
+                    error: null
+                });
+                sendResponse('');
             } catch (error) {
                 windowCallback({
                     return: requestTargetN3.Block,
@@ -969,20 +936,14 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         case requestTargetN3.ApplicationLog: {
             try {
                 const parameter = request.parameter as N3ApplicationLogArgs;
-                httpPost(request.nodeUrl, {
-                    jsonrpc: '2.0',
-                    method: 'getapplicationlog',
-                    params: [parameter.txid],
-                    id: 1
-                }, (response) => {
-                    windowCallback({
-                        return: requestTargetN3.ApplicationLog,
-                        data: response.error !== undefined ? null : response.result,
-                        ID: request.ID,
-                        error: response.error === undefined ? null : ERRORS.RPC_ERROR
-                    });
-                    sendResponse('');
-                }, null);
+                const data = await getN3ApplicationLog(parameter.txid);
+                windowCallback({
+                    return: requestTargetN3.ApplicationLog,
+                    data,
+                    ID: request.ID,
+                    error: null
+                });
+                sendResponse('');
             } catch (error) {
                 windowCallback({
                     return: requestTargetN3.ApplicationLog,
@@ -997,20 +958,14 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         case requestTargetN3.Storage: {
             try {
                 const parameter = request.parameter as N3GetStorageArgs;
-                httpPost(request.nodeUrl, {
-                    jsonrpc: '2.0',
-                    method: 'getstorage',
-                    params: [parameter.scriptHash, base64Encode(parameter.key)],
-                    id: 1
-                }, (response) => {
-                    windowCallback({
-                        return: requestTargetN3.Storage,
-                        data: response.error !== undefined ? null : ({ result: response.result } || null),
-                        ID: request.ID,
-                        error: response.error === undefined ? null : ERRORS.RPC_ERROR
-                    });
-                    sendResponse('');
-                }, null);
+                const data = await getN3Storage(parameter.scriptHash, base64Encode(parameter.key));
+                windowCallback({
+                    return: requestTargetN3.Storage,
+                    data: data.error !== undefined ? null : ({ result: data.result } || null),
+                    ID: request.ID,
+                    error: data.error === undefined ? null : ERRORS.RPC_ERROR
+                });
+                sendResponse('');
             } catch (error) {
                 windowCallback({
                     return: requestTargetN3.Storage,
@@ -1064,28 +1019,19 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
                 }
             });
             request.parameter[2] = args;
-            const returnRes = { data: {}, ID: request.ID, return: requestTargetN3.InvokeRead, error: null };
-            httpPost(request.nodeUrl, {
-                jsonrpc: '2.0',
-                method: 'invokefunction',
-                params: request.parameter,
-                id: 1
-            }, (res) => {
-                res.return = requestTargetN3.InvokeRead;
-                if (!res.error) {
-                    returnRes.data = res.result;
-                } else {
-                    returnRes.error = res.error;
-                }
-                windowCallback(returnRes);
-                sendResponse('');
-            }, null);
+            const data = await invokeFunction(parameter.scriptHash, parameter.operation, parameter.args, signers);
+            windowCallback({
+                data,
+                ID: request.ID,
+                return: requestTargetN3.InvokeRead,
+                error: null
+            });
+            sendResponse('');
             return;
         }
         case requestTargetN3.InvokeReadMulti: {
             try {
                 const requestData = request.parameter;
-                const nodeUrl = RPC.Neo3[requestData.network];
                 const signers = requestData.signers.map(item => {
                     return {
                         account: item.account,
@@ -1126,29 +1072,23 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
                             }
                         }
                     });
-                    requestData.invokeReadArgs[index] =
-                        [invokeReadItem.scriptHash, invokeReadItem.operation, invokeReadItem.args, signers];
+                    requestData.invokeReadArgs[index] = {
+                        scriptHash: invokeReadItem.scriptHash,
+                        operation: invokeReadItem.operation,
+                        args: invokeReadItem.args,
+                        signers
+                    }
                 });
                 const returnRes = { data: [], ID: request.ID, return: requestTargetN3.InvokeReadMulti, error: null };
                 let requestCount = 0;
-                requestData.invokeReadArgs.forEach(item => {
-                    httpPost(nodeUrl, {
-                        jsonrpc: '2.0',
-                        method: 'invokefunction',
-                        params: item,
-                        id: 1
-                    }, (res) => {
-                        requestCount++;
-                        if (!res.error) {
-                            returnRes.data.push(res.result);
-                        } else {
-                            returnRes.data.push(res.error)
-                        }
-                        if (requestCount === requestData.invokeReadArgs.length) {
-                            windowCallback(returnRes);
-                            sendResponse('');
-                        }
-                    }, null);
+                requestData.invokeReadArgs.forEach(async item => {
+                    const data = await invokeFunction(item.scriptHash, item.operation, item.args, item.signers);
+                    returnRes.data.push(data);
+                    requestCount++;
+                    if (requestCount === requestData.invokeReadArgs.length) {
+                        windowCallback(returnRes);
+                        sendResponse('');
+                    }
                 })
             } catch (error) {
                 console.log(error)
@@ -1306,57 +1246,53 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             const parameter = request.parameter as N3SendArgs;
             const assetID = parameter.asset.length < 10 ? '' : parameter.asset;
             const symbol = parameter.asset.length >= 10 ? '' : parameter.asset;
-            httpGet(`${mainApi}/v1/neo3/address/assets?address=${parameter.fromAddress}`, (resBalance) => {
-                let enough = true; // 有足够的钱
-                let hasAsset = false;  // 该地址有这个资产
-                const assets = resBalance.data;
-                for (let index = 0; index < assets.length; index++) {
-                    if (assets[index].contract === assetID || String(assets[index].symbol).toLowerCase() === symbol.toLowerCase()) {
-                        hasAsset = true;
-                        parameter.asset = assets[index].contract;
-                        if (Number(assets[index].balance) < Number(parameter.amount)) {
-                            enough = false;
-                        }
-                        break;
+            const assets = await getN3Balance(parameter.fromAddress);
+            let enough = true; // 有足够的钱
+            let hasAsset = false;  // 该地址有这个资产
+            for (let index = 0; index < assets.length; index++) {
+                if (assets[index].contract === assetID || String(assets[index].symbol).toLowerCase() === symbol.toLowerCase()) {
+                    hasAsset = true;
+                    parameter.asset = assets[index].contract;
+                    if (Number(assets[index].balance) < Number(parameter.amount)) {
+                        enough = false;
+                    }
+                    break;
+                }
+            }
+            if (enough && hasAsset) {
+                let queryString = '';
+                for (const key in parameter) {
+                    if (parameter.hasOwnProperty(key)) {
+                        const value = parameter[key];
+                        queryString += `${key}=${value}&`;
                     }
                 }
-                if (enough && hasAsset) {
-                    let queryString = '';
-                    for (const key in parameter) {
-                        if (parameter.hasOwnProperty(key)) {
-                            const value = parameter[key];
-                            queryString += `${key}=${value}&`;
-                        }
+                chrome.tabs.query({
+                    active: true,
+                    currentWindow: true
+                }, (tabs) => {
+                    tabCurr = tabs;
+                });
+                getLocalStorage('wallet', (wallet) => {
+                    if (wallet !== undefined && wallet.accounts[0].address !== parameter.fromAddress) {
+                        windowCallback({
+                            return: requestTargetN3.Send,
+                            error: ERRORS.MALFORMED_INPUT,
+                            ID: request.ID
+                        });
+                    } else {
+                        window.open(`index.html#popup/notification/neo3-transfer?${queryString}messageID=${request.ID}`,
+                            '_blank', 'height=620, width=386, resizable=no, top=0, left=0');
                     }
-                    chrome.tabs.query({
-                        active: true,
-                        currentWindow: true
-                    }, (tabs) => {
-                        tabCurr = tabs;
-                    });
-                    getLocalStorage('wallet', (wallet) => {
-                        if (wallet !== undefined && wallet.accounts[0].address !== parameter.fromAddress) {
-                            windowCallback({
-                                return: requestTargetN3.Send,
-                                error: ERRORS.MALFORMED_INPUT,
-                                ID: request.ID
-                            });
-                        } else {
-                            window.open(`index.html#popup/notification/neo3-transfer?${queryString}messageID=${request.ID}`,
-                                '_blank', 'height=620, width=386, resizable=no, top=0, left=0');
-                        }
-                    });
-                } else {
-                    window.postMessage({
-                        return: requestTargetN3.Send,
-                        error: ERRORS.INSUFFICIENT_FUNDS,
-                        ID: request.ID
-                    }, '*');
-                    return;
-                }
-            }, {
-                Network: getReqHeaderNetworkType(request.parameter.network)
-            });
+                });
+            } else {
+                window.postMessage({
+                    return: requestTargetN3.Send,
+                    error: ERRORS.INSUFFICIENT_FUNDS,
+                    ID: request.ID
+                }, '*');
+                return;
+            }
             return true;
         }
         case requestTargetN3.AddressToScriptHash: {

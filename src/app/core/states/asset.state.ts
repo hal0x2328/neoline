@@ -295,20 +295,6 @@ export class AssetState {
     }
 
     /**
-     * 获取某地址大于 0 的资产
-     * @param address 地址
-     */
-    fetchNeo3AddressTokens(address: string): Observable<any> {
-        return this.http
-            .get(`${this.global.apiDomain}/v1/neo3/address/assets?address=${address}`)
-            .pipe(
-                map((res) => {
-                    return this.formatResponseData(res);
-                })
-            );
-    }
-
-    /**
      * 获取推荐资产
      */
     fetchNeo3PopularToken(): Observable<any> {

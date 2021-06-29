@@ -62,7 +62,7 @@ export interface N3TransactionArgs {
 }
 
 export interface N3GetBlockInputArgs {
-    blockHeight: string;
+    blockHeight: number;
     network?: string;
 }
 

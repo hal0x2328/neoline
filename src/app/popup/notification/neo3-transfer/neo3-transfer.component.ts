@@ -143,7 +143,7 @@ export class PopupNoticeNeo3TransferComponent implements OnInit, AfterViewInit {
                 }
             }
             this.remark = params.remark || '';
-            this.asset.fetchNeo3AddressTokens(this.neon.address).subscribe(res => {
+            this.asset.fetchBalance(this.neon.address).subscribe(res => {
                 const filterAsset = res.filter(item => item.contract === params.asset);
                 if (filterAsset.length > 0) {
                     this.init = true;

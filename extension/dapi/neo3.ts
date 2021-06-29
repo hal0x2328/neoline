@@ -158,7 +158,7 @@ export class Init {
     }
 
     public getBlock(parameter: N3GetBlockInputArgs) {
-        if (parameter.blockHeight === undefined) {
+        if (parameter && parameter.blockHeight === undefined) {
             return new Promise((_, reject) => {
                 reject(ERRORS.CONNECTION_DENIED);
             });
@@ -168,7 +168,7 @@ export class Init {
     }
 
     public getApplicationLog(parameter: N3ApplicationLogArgs) {
-        if (parameter.txid === undefined) {
+        if (parameter && parameter.txid === undefined) {
             return new Promise((_, reject) => {
                 reject(ERRORS.CONNECTION_DENIED);
             });
