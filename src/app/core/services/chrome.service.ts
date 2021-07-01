@@ -20,6 +20,7 @@ import {
 import { Asset } from '@/models/models';
 import { EVENT, NETWORKS } from '@/models/dapi';
 import { ChainId, ChainType, NetType } from '@/app/popup/_lib';
+import { environment } from '@/environments/environment';
 
 declare var chrome: any;
 
@@ -86,6 +87,73 @@ export class ChromeService {
         });
     }
 
+    public setNodeUrl() {
+        const storageName = 'NodeArray'
+        const rpcArr = [
+            {
+                chainId: 1,
+                nodeUrl: environment.mainRPC
+            },
+            {
+                chainId: 2,
+                nodeUrl: environment.testRPC
+            },
+            {
+                chainId: 3,
+                nodeUrl: environment.neo3MainRPC
+            },
+            {
+                chainId: 4,
+                nodeUrl: environment.neo3TestRPC
+            }
+        ];
+        if (!this.check) {
+            localStorage.setItem(storageName, JSON.stringify(rpcArr));
+            return;
+        };
+        try {
+            const setData = {};
+            setData[storageName] = rpcArr;
+            this.crx.setStorage(setData);
+        } catch (e) {
+            console.log('set NodeArray failed', e);
+        }
+    }
+
+    public setTransactions(transactions) {
+        const storageName = 'transactionArr';
+        if (!this.check) {
+            localStorage.setItem(storageName, JSON.stringify(transactions));
+            return;
+        };
+        try {
+            const setData = {};
+            setData[storageName] = transactions;
+            this.crx.setStorage(setData);
+        } catch (e) {
+            console.log('set tansaction Array failed', e);
+        }
+    }
+
+    public getTransactions() {
+        const storageName = 'transactionArr';
+        if (!this.check) {
+            try {
+                return of(JSON.parse(localStorage.getItem(storageName)) || {});
+            } catch (e) {
+                return throwError('please set transactions json to local storage when debug mode on');
+            }
+        }
+        return from(new Promise<any>((resolve, reject) => {
+            try {
+                this.crx.getLocalStorage(storageName, (res) => {
+                    resolve(res || {});
+                });
+            } catch (e) {
+                reject('failed');
+            }
+        }));
+    }
 
     /**
      * check is in chrome extension env

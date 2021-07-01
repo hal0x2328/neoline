@@ -1,5 +1,5 @@
 <div class="popup-home-tx-page">
-    <div class="tx-item" *ngFor="let item of txData;let i = index" (click)="showDetail(item, assetId === '' ? item.symbol : symbol)">
+    <div class="tx-item" *ngFor="let item of txData;let i = index" (click)="showDetail(item, item.symbol)">
         <div class="head">
             <span class="time">{{ item.block_time * 1000 | date:'yyyy-MM-dd HH:mm:ss' }}</span>
             <img class="more-info-btn" src="/assets/images/home/arrow.png" alt=""
@@ -26,7 +26,7 @@
         </div>
         <hr>
     </div>
-    <div class="loading" *ngIf="loading">{{ 'loading' | translate | async}}</div>
+    <!-- <div class="loading" *ngIf="loading">{{ 'loading' | translate | async}}</div> -->
     <p *ngIf="noMoreData" class="no-data">
         {{ 'noMoreData' | translate | async }}
     </p>

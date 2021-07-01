@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GlobalService, NeonService, ChromeService, AssetState } from '@/app/core';
 import { Transaction } from '@cityofzion/neon-core-neo3/lib/tx';
-import { tx } from '@cityofzion/neon-js-neo3';
+import { tx, rpc as rpc3 } from '@cityofzion/neon-js-neo3';
 import { MatDialog } from '@angular/material/dialog';
 import { ERRORS } from '@/models/dapi';
 import { requestTargetN3 } from '@/models/dapi_neo3';
@@ -44,6 +44,7 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
     public networkFeeMoney;
     public totalFee;
     public totalMoney;
+    public rpcClient;
 
     constructor(
         private aRoute: ActivatedRoute,
@@ -54,7 +55,10 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
         private chrome: ChromeService,
         private assetState: AssetState,
         private neo3Invoke: Neo3InvokeService,
-    ) { }
+        private globalService: GlobalService,
+    ) {
+        this.rpcClient = new rpc3.RPCClient(this.globalService.Neo3RPCDomain);
+    }
 
     ngOnInit(): void {
         this.assetImageUrl = this.assetState.getAssetImageFromAssetId(NEO3_CONTRACT)
@@ -70,6 +74,7 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
                     hostname: undefined,
                 };
                 this.pramsData = params;
+                this.invokeArgs = this.pramsData.invokeArgs;
                 this.pramsData.invokeArgs.forEach(item => {
                     item = this.neo3Invoke.createInvokeInputs(item);
                     this.invokeArgs.push({
@@ -162,6 +167,28 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
                 },
                 return: requestTargetN3.InvokeMultiple,
                 ID: this.messageID
+            });
+            this.chrome.getWallet().subscribe(wallet => {
+                const address = wallet.accounts[0].address;
+                const time =  new Date().getTime() / 1000;
+                this.invokeArgs.forEach(async item => {
+                    const symbolRes = await this.rpcClient.invokeFunction(item.scriptHash, 'symbol', []);
+                    const sendTx = {
+                        txid: txHash,
+                        from: address,
+                        to: '',
+                        value: 0,
+                        block_time: time,
+                        asset_id: item.scriptHash,
+                        symbol: this.base64Decod(symbolRes.stack[0].value)
+                    };
+                    this.chrome.getTransactions().subscribe(transactions => {
+                        let addressTxs = transactions[address] ? transactions[address] : [];
+                        addressTxs = [...addressTxs]
+                        transactions[address] = [sendTx, ...addressTxs];
+                        this.chrome.setTransactions(transactions);
+                    });
+                });
             });
             const setData = {};
             setData[`N3${this.net}TxArr`] = await this.chrome.getLocalStorage(`N3${this.net}TxArr`) || [];
@@ -270,5 +297,9 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
                 }
             }).afterClosed().subscribe(() => {});
         }
+    }
+
+    public base64Decod(value: string): string {
+        return decodeURIComponent(window.atob(value));
     }
 }

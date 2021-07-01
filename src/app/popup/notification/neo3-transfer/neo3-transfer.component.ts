@@ -143,8 +143,9 @@ export class PopupNoticeNeo3TransferComponent implements OnInit, AfterViewInit {
                 }
             }
             this.remark = params.remark || '';
-            this.asset.fetchBalance(this.neon.address).subscribe(res => {
-                const filterAsset = res.filter(item => item.contract === params.asset);
+            this.asset.fetchBalance(this.neon.address).subscribe(async res => {
+                const assets = await res;
+                const filterAsset = assets.filter(item => item.asset_id === params.asset);
                 if (filterAsset.length > 0) {
                     this.init = true;
                     this.symbol = filterAsset[0].symbol;
@@ -243,6 +244,23 @@ export class PopupNoticeNeo3TransferComponent implements OnInit, AfterViewInit {
                 return: requestTargetN3.Send,
                 ID: this.messageID
             });
+            const sendTx = {
+                txid: TxHash,
+                from: this.fromAddress,
+                to: this.toAddress,
+                value: -this.amount,
+                block_time: new Date().getTime() / 1000,
+                asset_id: this.assetId,
+                symbol: this.symbol
+            };
+            if (this.neon.currentWalletChainType === 'Neo3') {
+                this.chrome.getTransactions().subscribe(transactions => {
+                    let addressTxs = transactions[this.fromAddress] ? transactions[this.fromAddress] : [];
+                    addressTxs = [...addressTxs]
+                    transactions[this.fromAddress] = [sendTx, ...addressTxs];
+                    this.chrome.setTransactions(transactions);
+                });
+            }
             const setData = {};
             setData[`N3${this.network}TxArr`] = await this.chrome.getLocalStorage(`N3${this.network}TxArr`) || [];
             setData[`N3${this.network}TxArr`].push(TxHash);

@@ -57,6 +57,12 @@ export class PopupTxPageComponent implements OnInit, OnDestroy {
     }
 
     public getInTransactions(page: number) {
+        if (this.neon.currentWalletChainType === 'Neo3') {
+            this.chrome.getTransactions().subscribe(inTxData => {
+                this.txData = inTxData[this.address].filter(item => item.asset_id === this.assetId);
+            });
+            return;
+        }
         if (this.currentPage === page) {
             return;
         } else {
@@ -100,11 +106,6 @@ export class PopupTxPageComponent implements OnInit, OnDestroy {
                         case 'Neo2':
                             httpReq2 = this.http.post(`${this.global.apiDomain}/v1/neo2/txids_valid`, {
                                 txids: txIdArray
-                            });
-                            break;
-                        case 'Neo3':
-                            httpReq2 = this.http.post(`${this.global.apiDomain}/v1/neo3/hash_valid`, {
-                                hashes: txIdArray
                             });
                             break;
                     }

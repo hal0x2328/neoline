@@ -1,21 +1,28 @@
 import { Injectable } from '@angular/core';
 import { HttpService } from '../services/http.service';
 import { GlobalService } from '../services/global.service';
-import { Subject, Observable } from 'rxjs';
+import { Subject, Observable, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NeonService } from '../services/neon.service';
+import { AssetState } from '../states/asset.state';
 import { TX_LIST_PAGE_SIZE, NEO3_CONTRACT, GAS3_CONTRACT } from '@popup/_lib';
+import { rpc as rpc3 } from '@cityofzion/neon-core-neo3';
+import { bignumber } from 'mathjs';
 
 @Injectable()
 export class TransactionState {
     public txSource = new Subject();
     public txSub$ = this.txSource.asObservable();
+    public rpcClient;
 
     constructor(
         private http: HttpService,
         private global: GlobalService,
-        private neonService: NeonService
-    ) {}
+        private neonService: NeonService,
+        private globalService: GlobalService,
+    ) {
+        this.rpcClient = new rpc3.RPCClient(this.globalService.Neo3RPCDomain);
+    }
 
     public pushTxSource() {
         this.txSource.next('new');
@@ -45,7 +52,7 @@ export class TransactionState {
 
     public getAllTx(address: string, maxId: number = -1): Observable<any> {
         if (this.neonService.currentWalletChainType === 'Neo3') {
-            return this.fetchNeo3AllTxs(address, maxId);
+            return;
         }
         let url =
             `${this.global.apiDomain}/v1/neo2/address/transactions/all?` +
@@ -62,12 +69,7 @@ export class TransactionState {
 
     getTxDetail(
         txid: string,
-        address: string,
-        assetId: string
     ): Observable<any> {
-        if (this.neonService.currentWalletChainType === 'Neo3') {
-            return this.fetchNeo3TxDetail(address, assetId, txid);
-        }
         return this.http
             .get(`${this.global.apiDomain}/v1/neo2/transaction/${txid}`)
             .pipe(
@@ -122,43 +124,5 @@ export class TransactionState {
             );
     }
 
-    /**
-     * 获取所有交易列表
-     * @param address 地址
-     * @param maxId maxid
-     */
-    fetchNeo3AllTxs(address: string, maxId?: number): Observable<any> {
-        let req = `?address=${address}&count=${TX_LIST_PAGE_SIZE}`;
-        if (maxId !== -1) {
-            req += `&max_id=${maxId - 1}`;
-        }
-        return this.http
-            .get(`${this.global.apiDomain}/v1/neo3/address/transactions${req}`)
-            .pipe(
-                map((res) => {
-                    return this.formatResponseData(res);
-                })
-            );
-    }
-
-    /**
-     * 获取交易详情
-     * @param address 地址
-     * @param assetId 资产id
-     * @param txid 交易id
-     */
-    fetchNeo3TxDetail(
-        address: string,
-        assetId: string,
-        txid: string
-    ): Observable<any> {
-        return this.http
-            .get(`${this.global.apiDomain}/v1/neo3/transaction/${address}/${assetId}/${txid}`)
-            .pipe(
-                map((res) => {
-                    return res || {};
-                })
-            );
-    }
     //#endregion
 }

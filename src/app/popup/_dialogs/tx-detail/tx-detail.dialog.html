@@ -17,15 +17,21 @@
 </div>
 <div class="item column">
     <p class="name">{{ 'from' | translate | async }}</p>
-    <div class="address-group">
+    <div class="address-group" *ngIf="!data.tx.from">
         <p *ngFor="let item of txDetail?.nep5">{{ item?.from }}</p>
         <p *ngFor="let item of txDetail?.vin">{{ item }}</p>
+    </div>
+    <div class="address-group" *ngIf="data.tx.from">
+        <p>{{ data.tx.from }}</p>
     </div>
 </div>
 <div class="item column">
     <p class="name">{{ 'to' | translate | async }}</p>
-    <div class="address-group">
+    <div class="address-group" *ngIf="!data.tx.to">
         <p *ngFor="let item of txDetail?.nep5">{{ item?.to }}</p>
         <p *ngFor="let item of txDetail?.vout">{{ item }}</p>
+    </div>
+    <div class="address-group" *ngIf="data.tx.to">
+        <p>{{ data.tx.to }}</p>
     </div>
 </div>

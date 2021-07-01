@@ -34,6 +34,7 @@ export class AppComponent {
         private http: HttpClient,
         private neonService: NeonService
     ) {
+        this.chrome.setNodeUrl();
         this.chrome.getLang().subscribe((res) => {
             this.http
                 .get(`/_locales/${res}/messages.json`)

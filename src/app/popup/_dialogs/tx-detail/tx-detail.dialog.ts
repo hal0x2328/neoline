@@ -12,6 +12,7 @@ export class PopupTxDetailDialogComponent {
     constructor(
         private txState: TransactionState,
         private neonService: NeonService,
+        private neon: NeonService,
         @Inject(MAT_DIALOG_DATA)
         public data: {
             tx: any;
@@ -20,11 +21,10 @@ export class PopupTxDetailDialogComponent {
             assetId: string;
         }
     ) {
-        this.txState
+        if (this.neon.currentWalletChainType === 'Neo2') {
+            this.txState
             .getTxDetail(
-                this.data.tx.txid,
-                this.data.address,
-                this.data.assetId
+                this.data.tx.txid
             )
             .subscribe((res) => {
                 this.txDetail = res;
@@ -57,27 +57,8 @@ export class PopupTxDetailDialogComponent {
                             []
                         );
                         break;
-                    case 'Neo3':
-                        this.txDetail.vin = [];
-                        this.txDetail.vout = [];
-                        this.txDetail.transfer.forEach((txItem) => {
-                            if (
-                                !this.txDetail.vin.find(
-                                    (item) => item === txItem.from
-                                )
-                            ) {
-                                this.txDetail.vin.push(txItem.from);
-                            }
-                            if (
-                                !this.txDetail.vout.find(
-                                    (item) => item === txItem.from
-                                )
-                            ) {
-                                this.txDetail.vout.push(txItem.to);
-                            }
-                        });
-                        break;
                 }
             });
+        }
     }
 }
