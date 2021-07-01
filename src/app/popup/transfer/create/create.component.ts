@@ -94,6 +94,7 @@ export class TransferCreateComponent implements OnInit {
         this.aRoute.params.subscribe((params) => {
             if (params.id) {
                 this.asset.detail(this.neon.address, params.id).subscribe(async (res: Asset) => {
+                    res = await res;
                     res.balance = bignumber(res.balance).toFixed();
                     this.chooseAsset = res;
                     this.assetId = res.asset_id;
@@ -270,6 +271,23 @@ export class TransferCreateComponent implements OnInit {
                     break;
             }
             this.creating = false;
+            const sendTx = {
+                txid,
+                from: this.fromAddress,
+                to: this.toAddress,
+                value: -this.amount,
+                block_time: new Date().getTime() / 1000,
+                asset_id: this.assetId,
+                symbol: this.chooseAsset.symbol
+            };
+            if (this.neon.currentWalletChainType === 'Neo3') {
+                this.chrome.getTransactions().subscribe(transactions => {
+                    let addressTxs = transactions[this.fromAddress] ? transactions[this.fromAddress] : [];
+                    addressTxs = [...addressTxs]
+                    transactions[this.fromAddress] = [sendTx, ...addressTxs];
+                    this.chrome.setTransactions(transactions);
+                });
+            }
             if (this.fromAddress !== this.toAddress) {
                 const txTarget = {
                     txid,

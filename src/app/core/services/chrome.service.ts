@@ -135,7 +135,7 @@ export class ChromeService {
         }
     }
 
-    public getTransactions() {
+    public getTransactions(): Observable<object>  {
         const storageName = 'transactionArr';
         if (!this.check) {
             try {

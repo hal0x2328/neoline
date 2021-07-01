@@ -21,7 +21,7 @@ import {
     setLocalStorage,
     getLocalStorage
 } from '../common';
-import { mainApi, RPC, ChainType, NETWORKS, ChainId, Network, WitnessScope } from '../common/constants';
+import { mainApi, Neo2NodeUrl, ChainType, Network, WitnessScope } from '../common/constants';
 import {
     requestTarget, GetBalanceArgs, ERRORS,
     EVENT, AccountPublicKey, GetBlockInputArgs,
@@ -45,7 +45,7 @@ import {
     u as u3,
     wallet as wallet3
 } from '@cityofzion/neon-core-neo3/lib';
-import { checkoutN3Network, getRawTransaction, invokeFunction } from '../common/rpcN3';
+import { checkoutNetwork, getBlock, getRawTransaction, invokeFunction } from '../common/rpcN3';
 
 /**
  * Background methods support.
@@ -69,18 +69,14 @@ export function expand() {
 }
 (function init() {
     setInterval(async () => {
-        let chainType = await getLocalStorage('chainType', () => { });
-        if (!chainType) {
-            chainType = await getWalletType();
-        };
-        const newLocal = 'TestNet';
-        let rpcUrl = RPC[chainType][newLocal];
+        const chainType = await getLocalStorage('chainType', () => { });
+        let rpcUrl;
         const network: Network = getNetwork(currChainId);
-        if (chainType === ChainType.Neo2) {
-            rpcUrl = RPC[chainType][currNetwork];
-        } else if (chainType === ChainType.Neo3) {
-            rpcUrl = RPC[chainType][currNetwork];
-        }
+        getStorage('NodeArray', (nodeArray) => {
+            getStorage('chainId', chainId => {
+                rpcUrl = nodeArray.filter(item => item.chainId === chainId)[0].nodeUrl;
+            });
+        });
         setTimeout(async () => {
             let oldHeight = await getLocalStorage(`${chainType}_${network}BlockHeight`, () => { }) || 0;
             httpPost(rpcUrl, {
@@ -172,36 +168,28 @@ export function expand() {
             if (txArr.length === 0) {
                 return;
             }
-            httpPost(`${mainApi}/v1/neo3/hash_valid`, { hashes: txArr }, (txConfirmData) => {
-                if (txConfirmData.status === 'success') {
-                    const txConfirms = txConfirmData.data || [];
-                    txConfirms.forEach(item => {
-                        const tempIndex = txArr.findIndex(e => e === item);
+            txArr.forEach(txid => {
+                getRawTransaction(txid).then(async txDetail => {
+                    const tempIndex = txArr.findIndex(e => e === txid);
                         if (tempIndex >= 0) {
                             txArr.splice(tempIndex, 1);
                         }
-                        httpGet(`${mainApi}/v1/neo3/dapi/transaction/${item}`, (txDetail) => {
-                            if (txDetail.status === 'success') {
-                                windowCallback({
-                                    data: {
-                                        chainId: currChainId,
-                                        txid: item,
-                                        blockHeight: txDetail.data.block_index,
-                                        blockTime: txDetail.data.block_time,
-                                    },
-                                    return: EVENT.TRANSACTION_CONFIRMED
-                                });
-                            }
-                        }, {
-                            Network: getReqHeaderNetworkType(currNetwork)
+                    const blockDetail = await getBlock(txDetail.blockhash);
+                    if (txDetail.status === 'success') {
+                        windowCallback({
+                            data: {
+                                chainId: currChainId,
+                                txid,
+                                blockHeight: blockDetail.index,
+                                blockTime: txDetail.blocktime /= 1000,
+                            },
+                            return: EVENT.TRANSACTION_CONFIRMED
                         });
-                    });
-                };
-                const setData = {};
-                setData[`N3${currNetwork}TxArr`] = txArr;
-                setLocalStorage(setData);
-            }, {
-                Network: getReqHeaderNetworkType(currNetwork)
+                    }
+                    const setData = {};
+                    setData[`N3${currNetwork}TxArr`] = txArr;
+                    setLocalStorage(setData)
+                });
             });
         }
     }, 8000);
@@ -250,8 +238,8 @@ export function setNetwork(network, chainId, chainType) {
     currNetwork = network;
     currChainId = chainId;
     currChain = chainType;
-    if (chainId === 4) {
-        checkoutN3Network();
+    if (chainId === 3 || chainId === 4) {
+        checkoutNetwork();
     }
 }
 
@@ -472,7 +460,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         case requestTarget.Block: {
             try {
                 const parameter = request.parameter as GetBlockInputArgs;
-                const nodeUrl = RPC.Neo2[parameter.network];
+                const nodeUrl = Neo2NodeUrl[parameter.network];
                 httpPost(nodeUrl, {
                     jsonrpc: '2.0',
                     method: 'getblock',
@@ -522,7 +510,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         case requestTarget.Storage: {
             try {
                 const parameter = request.parameter as GetStorageArgs;
-                const nodeUrl = RPC.Neo2[parameter.network];
+                const nodeUrl = Neo2NodeUrl[parameter.network];
                 httpPost(nodeUrl, {
                     jsonrpc: '2.0',
                     method: 'getstorage',
@@ -549,7 +537,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             return;
         }
         case requestTarget.InvokeRead: {
-            const nodeUrl = RPC.Neo2[request.parameter.network];
+            const nodeUrl = Neo2NodeUrl[request.parameter.network];
             request.parameter = [request.parameter.scriptHash, request.parameter.operation, request.parameter.args];
             const args = request.parameter[2];
             args.forEach((item, index) => {
@@ -607,7 +595,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         }
         case requestTarget.InvokeReadMulti: {
             try {
-                const nodeUrl = RPC.Neo2[request.parameter.network];
+                const nodeUrl = Neo2NodeUrl[request.parameter.network];
                 const requestData = request.parameter;
                 requestData.invokeReadArgs.forEach((invokeReadItem: any, index) => {
                     invokeReadItem.args.forEach((item, itemIndex) => {

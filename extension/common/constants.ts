@@ -22,16 +22,10 @@ export enum ReqHeaderNetworkType {
 /**
  * @param N3MainNet Replace after N3 mainnet is online, Currently affecting use
  */
-export const RPC = {
-    Neo2: {
-        TestNet: 'https://neo2-testnet.neoline.io',
-        MainNet: 'https://neo2-mainnet.neoline.io',
-    },
-    Neo3: {
-        N3TestNet: 'https://neo3-testnet.neoline.vip',
-        N3MainNet: 'https://neo3-testnet.neoline.vip',
-    }
-};
+export const Neo2NodeUrl = {
+    TestNet: 'https://neo2-testnet.neoline.io',
+    MainNet: 'https://neo2-mainnet.neoline.io',
+}
 
 /**
  * @param N3MainNet Mainnet is not yet online, Mainnet Id 3
