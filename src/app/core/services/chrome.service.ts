@@ -146,7 +146,7 @@ export class ChromeService {
         }
         return from(new Promise<any>((resolve, reject) => {
             try {
-                this.crx.getLocalStorage(storageName, (res) => {
+                this.crx.getStorage(storageName, (res) => {
                     resolve(res || {});
                 });
             } catch (e) {
