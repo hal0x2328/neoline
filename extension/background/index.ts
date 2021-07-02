@@ -175,17 +175,15 @@ export function expand() {
                             txArr.splice(tempIndex, 1);
                         }
                     const blockDetail = await getBlock(txDetail.blockhash);
-                    if (txDetail.status === 'success') {
-                        windowCallback({
-                            data: {
-                                chainId: currChainId,
-                                txid,
-                                blockHeight: blockDetail.index,
-                                blockTime: txDetail.blocktime /= 1000,
-                            },
-                            return: EVENT.TRANSACTION_CONFIRMED
-                        });
-                    }
+                    windowCallback({
+                        data: {
+                            chainId: currChainId,
+                            txid,
+                            blockHeight: blockDetail.index,
+                            blockTime: txDetail.blocktime /= 1000,
+                        },
+                        return: EVENT.TRANSACTION_CONFIRMED
+                    });
                     const setData = {};
                     setData[`N3${currNetwork}TxArr`] = txArr;
                     setLocalStorage(setData)
