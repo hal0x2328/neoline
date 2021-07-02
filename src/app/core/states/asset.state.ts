@@ -38,7 +38,7 @@ export class AssetState {
         private chrome: ChromeService,
         private neonService: NeonService
     ) {
-        this.rpcClient = new rpc3.RPCClient('https://neo3-testnet.neoline.vip');
+        this.rpcClient = new rpc3.RPCClient(this.global.Neo3RPCDomain);
         this.chrome.getAssetFile().subscribe((res) => {
             this.assetFile = res;
         });
@@ -318,15 +318,13 @@ export class AssetState {
     }
 
     fetchNeo3GasFee(): Observable<any> {
-        return this.http.get(`${this.global.apiDomain}/v1/neo3/fees`).pipe(
-            map((res: any) => {
-                res.slow_price = bignumber(res.slow_price).dividedBy(bignumber(10).pow(8)).toFixed();
-                res.propose_price = bignumber(res.propose_price).dividedBy(bignumber(10).pow(8)).toFixed();
-                res.fast_price = bignumber(res.fast_price).dividedBy(bignumber(10).pow(8)).toFixed();
-                this.neo3GasFeeSpeed = res || this.gasFeeDefaultSpeed;
-                return res || this.gasFeeDefaultSpeed;
-            })
-        );
+        return new Observable((observer) => {
+            return observer.next({
+                slow_price: bignumber(10).dividedBy(bignumber(10).pow(8)).toFixed(),
+                propose_price: bignumber(50).dividedBy(bignumber(10).pow(8)).toFixed(),
+                fast_price: bignumber(100).dividedBy(bignumber(10).pow(8)).toFixed()
+            });
+        });
     }
 
     /**
@@ -342,9 +340,9 @@ export class AssetState {
             })
         );
     }
-    //#endregion
 
     public base64Decod(value: string): string {
         return decodeURIComponent(window.atob(value));
     }
+    //#endregion
 }
