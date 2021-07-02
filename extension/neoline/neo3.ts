@@ -93,7 +93,7 @@ window.addEventListener('message', async (e) => {
                             // let chainId = result || ChainId.N3TestNet;
                             const network = getNetwork(result) || Network.N3TestNet;
                             e.data.parameter.network = network;
-                            e.data.nodeUrl = checkoutNetwork().nodeUrl;
+                            e.data.nodeUrl = checkoutNetwork();
                             chrome.runtime.sendMessage(e.data, (response) => {
                                 return Promise.resolve('Dummy response to keep the console quiet');
                             });

@@ -13,11 +13,7 @@ export function checkoutNetwork(): any {
             const nodeItem = nodeArr.filter(item => item.chainId === chainId)[0];
             nodeUrl = nodeItem.nodeUrl;
             rpcClient = new rpc3.RPCClient(nodeItem.nodeUrl);
-            return {
-                rpcClient,
-                nodeUrl,
-                chainId
-            }
+            return nodeUrl;
         });
     });
 }
