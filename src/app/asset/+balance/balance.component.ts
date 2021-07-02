@@ -48,15 +48,15 @@ export class BalanceComponent implements OnInit {
             lastModified = imageObj['last-modified'];
             this.imageUrl = imageObj['image-src'];
         }
-        this.assetState.getAssetImageFromUrl(this.asset.image_url, lastModified).subscribe(assetRes => {
-            if (assetRes && assetRes['status'] === 200) {
-                this.assetState.setAssetFile(assetRes, assetId).then(src => {
-                    this.imageUrl = src;
-                });
-            } else if (assetRes && assetRes['status'] === 404) {
+        // this.assetState.getAssetImageFromUrl(this.asset.image_url, lastModified).subscribe(assetRes => {
+            // if (assetRes && assetRes['status'] === 200) {
+            //     this.assetState.setAssetFile(assetRes, assetId).then(src => {
+            //         this.imageUrl = src;
+            //     });
+            // } else if (assetRes && assetRes['status'] === 404) {
                 this.imageUrl = this.assetState.defaultAssetSrc;
-            }
-        });
+            // }
+        // });
         if (!this.asset.balance || this.asset.balance === 0) {
             this.asset.rateBalance = 0;
         }

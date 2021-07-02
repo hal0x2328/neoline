@@ -216,32 +216,32 @@ export class AssetState {
     }
 
     public async getAssetImage(asset: Asset) {
-        const imageObj = this.assetFile.get(asset.asset_id);
-        let lastModified = '';
-        if (imageObj) {
-            lastModified = imageObj['last-modified'];
-            return imageObj['image-src'];
-        }
-        const assetRes = await this.getAssetImageFromUrl(
-            asset.image_url,
-            lastModified
-        ).toPromise();
-        if (assetRes && assetRes.status === 200) {
-            const src = await this.setAssetFile(assetRes, asset.asset_id);
-        } else if (assetRes && assetRes.status === 404) {
+        // const imageObj = this.assetFile.get(asset.asset_id);
+        // let lastModified = '';
+        // if (imageObj) {
+        //     lastModified = imageObj['last-modified'];
+        //     return imageObj['image-src'];
+        // }
+        // const assetRes = await this.getAssetImageFromUrl(
+        //     asset.image_url,
+        //     lastModified
+        // ).toPromise();
+        // if (assetRes && assetRes.status === 200) {
+        //     const src = await this.setAssetFile(assetRes, asset.asset_id);
+        // } else if (assetRes && assetRes.status === 404) {
             return this.defaultAssetSrc;
-        }
+        // }
     }
 
     public getAssetImageFromAssetId(asset: string) {
-        const imageObj = this.assetFile.get(asset);
-        let lastModified = '';
-        if (imageObj) {
-            lastModified = imageObj['last-modified'];
-            return imageObj['image-src'];
-        } else {
+        // const imageObj = this.assetFile.get(asset);
+        // let lastModified = '';
+        // if (imageObj) {
+        //     lastModified = imageObj['last-modified'];
+        //     return imageObj['image-src'];
+        // } else {
             return this.defaultAssetSrc;
-        }
+        // }
     }
 
     public getNep5Detail(assetId: string): Observable<Nep5Detail> {

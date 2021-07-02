@@ -78,7 +78,7 @@ export class PopupHomeComponent implements OnInit {
         let lastModified = '';
         if (imageObj) {
             lastModified = imageObj['last-modified'];
-            this.imageUrl = imageObj['image-src'];
+            this.imageUrl = this.assetState.defaultAssetSrc;
         }
     }
 
@@ -143,26 +143,26 @@ export class PopupHomeComponent implements OnInit {
             lastModified = imageObj['last-modified'];
             this.assetList[index].image_url = imageObj['image-src'];
         }
-        this.assetState
-            .getAssetImageFromUrl(asset.image_url, lastModified)
-            .subscribe(assetRes => {
-                if (assetRes && assetRes.status === 200) {
-                    this.assetState
-                        .setAssetFile(assetRes, asset.asset_id)
-                        .then(src => {
-                            this.assetList[index].image_url = src;
-                        });
-                } else if (assetRes && assetRes.status === 404) {
+        // this.assetState
+        //     .getAssetImageFromUrl(asset.image_url, lastModified)
+        //     .subscribe(assetRes => {
+        //         if (assetRes && assetRes.status === 200) {
+        //             this.assetState
+        //                 .setAssetFile(assetRes, asset.asset_id)
+        //                 .then(src => {
+        //                     this.assetList[index].image_url = src;
+        //                 });
+        //         } else if (assetRes && assetRes.status === 404) {
                     this.assetList[
                         index
                     ].image_url = this.assetState.defaultAssetSrc;
-                }
-                if(asset.asset_id === NEO || asset.asset_id === NEO3_CONTRACT) {
-                    this.imageUrl =  this.assetList[
-                        index
-                    ].image_url;
-                }
-            });
+            //     }
+            //     if(asset.asset_id === NEO || asset.asset_id === NEO3_CONTRACT) {
+            //         this.imageUrl =  this.assetList[
+            //             index
+            //         ].image_url;
+            //     }
+            // });
     }
 
     public onScrolltaChange(el: Element) {
