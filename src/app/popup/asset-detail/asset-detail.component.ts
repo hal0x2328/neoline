@@ -48,15 +48,20 @@ export class PopupAssetDetailComponent implements OnInit {
         this.net = this.global.net;
         this.aRouter.params.subscribe(async (params: any) => {
             this.assetId = params.assetId || NEO;
-            this.imageUrl = await this.assetState.getAssetImageFromAssetId(
-                this.assetId
-            );
+            this.imageUrl = await this.assetState.defaultAssetSrc;
             // 获取资产信息
-            this.assetState
+            if (this.neon.currentWalletChainType === 'Neo3') {
+                const assets = await this.assetState
+                .fetchBalance(this.neon.address)
+                .toPromise();
+                this.balance = assets.find((b) => b.asset_id === this.assetId);
+            } else {
+                this.assetState
                 .fetchBalance(this.neon.address)
                 .subscribe((balanceArr) => {
                     this.handlerBalance(balanceArr);
                 });
+            }
             this.chrome.getWatch(this.neon.address, this.neon.currentWalletChainType).subscribe((res) => {
                 this.watch = res;
                 this.canHideBalance =

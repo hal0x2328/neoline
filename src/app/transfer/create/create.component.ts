@@ -7,7 +7,7 @@ import {
     ActivatedRoute
 } from '@angular/router';
 import {
-    Balance, NEO, GAS
+    Balance
 } from '@/models/models';
 import {
     AssetState,

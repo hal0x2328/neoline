@@ -77,6 +77,7 @@ export class TransferCreateComponent implements OnInit {
         private block: BlockState,
         private txState: TransactionState,
         private neo3Transfer: Neo3TransferService,
+        private assetState: AssetState,
     ) {
         switch(this.neon.currentWalletChainType) {
             case 'Neo2':
@@ -91,15 +92,24 @@ export class TransferCreateComponent implements OnInit {
     ngOnInit(): void {
         this.net = this.global.net;
         this.fromAddress = this.neon.address;
-        this.aRoute.params.subscribe((params) => {
+        this.aRoute.params.subscribe(async (params) => {
             if (params.id) {
-                this.asset.detail(this.neon.address, params.id).subscribe(async (res: Asset) => {
-                    res = await res;
-                    res.balance = bignumber(res.balance).toFixed();
-                    this.chooseAsset = res;
-                    this.assetId = res.asset_id;
-                    this.assetLogoUrl = await this.asset.getAssetImage(res);
-                });
+                if (this.neon.currentWalletChainType === 'Neo3') {
+                    const assets = await this.assetState
+                    .fetchBalance(this.neon.address)
+                    .toPromise();
+                    this.chooseAsset = assets.find((b) => b.asset_id === params.id);
+                    this.assetId = this.chooseAsset.asset_id;
+                    this.assetLogoUrl = await this.asset.getAssetImage(this.chooseAsset);
+                } else {
+                    this.asset.detail(this.neon.address, params.id).subscribe(async (res: Asset) => {
+                        res = await res;
+                        res.balance = bignumber(res.balance).toFixed();
+                        this.chooseAsset = res;
+                        this.assetId = res.asset_id;
+                        this.assetLogoUrl = await this.asset.getAssetImage(res);
+                    });
+                }
             }
             this.asset.fetchBalance(this.neon.address).subscribe(async balanceArr => {
                 this.balances = await balanceArr;

@@ -2,13 +2,11 @@ import {
     Component,
     OnInit,
     AfterViewInit,
-    OnDestroy
 } from '@angular/core';
 import {
     ChromeService,
     GlobalService,
     NeonService,
-    AssetState
 } from '@app/core';
 import {
     Router,
@@ -17,7 +15,6 @@ import {
 } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { PopupHomeMenuDialogComponent } from './_dialogs';
-import { ChainId, NetType } from './_lib';
 
 @Component({
     templateUrl: 'popup.component.html',
@@ -42,8 +39,6 @@ export class PopupComponent implements OnInit, AfterViewInit {
         private neon: NeonService,
         private router: Router,
         private dialog: MatDialog,
-        private assetSer: AssetState,
-        private neonService: NeonService
     ) {
         this.walletIsOpen = false;
         this.isLogin = false;

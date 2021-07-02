@@ -29,23 +29,22 @@ import {
 import {
     ChromeService
 } from './chrome.service';
-import { evaluate, add, subtract, multiply, divide, bignumber } from 'mathjs';
-import { randomBytes, pbkdf2 } from 'crypto';
-import CryptoJS from 'crypto-js';
-import { resolve } from 'path';
+import { add, subtract, multiply, divide, bignumber } from 'mathjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { rpc as rpc3 } from '@cityofzion/neon-core-neo3';
 
 @Injectable()
 export class GlobalService {
     public apiDomain: string;
     public RPCDomain: string;
-    public Neo3RPCDomain: string;
+    public Neo3RPCDomain: string = '';
     public $wallet: Subject < string > ;
     public languageJson: any = null;
     public debug = false;
     public net: string;
     private source404 = new Subject<string>();
     public $404 = this.source404.asObservable();
+    public rpc3;
 
     constructor(
         private matDialog: MatDialog,
@@ -75,6 +74,7 @@ export class GlobalService {
             this.RPCDomain = environment.testRPC;
             this.Neo3RPCDomain = environment.neo3TestRPC;
         }
+        this.rpc3 = new rpc3.RPCClient(this.Neo3RPCDomain);
     }
     public log(...params: any[]) {
         if (this.debug) {

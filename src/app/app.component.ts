@@ -30,11 +30,9 @@ export class AppComponent {
         private global: GlobalService,
         private neon: NeonService,
         private dialog: MatDialog,
-        private assetSer: AssetState,
         private http: HttpClient,
-        private neonService: NeonService
     ) {
-        this.chrome.setNodeUrl();
+        this.chrome.setNodeArray();
         this.chrome.getLang().subscribe((res) => {
             this.http
                 .get(`/_locales/${res}/messages.json`)

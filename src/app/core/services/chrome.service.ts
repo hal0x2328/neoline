@@ -87,7 +87,7 @@ export class ChromeService {
         });
     }
 
-    public setNodeUrl() {
+    public setNodeArray() {
         const storageName = 'NodeArray'
         const rpcArr = [
             {

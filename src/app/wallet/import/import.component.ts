@@ -5,11 +5,6 @@ import {
     Input
 } from '@angular/core';
 import {
-    FormGroup,
-    FormControl,
-    Validators
-} from '@angular/forms';
-import {
     wallet
 } from '@cityofzion/neon-core';
 import {

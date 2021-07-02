@@ -74,7 +74,7 @@ export class PopupHomeComponent implements OnInit {
         this.rateCurrency = this.assetState.rateCurrency;
         this.assetId = this.neon.currentWalletChainType === 'Neo2' ? NEO : NEO3_CONTRACT;
 
-        const imageObj = this.assetState.assetFile.get(this.assetId);
+        const imageObj = this.assetState.defaultAssetSrc;
         let lastModified = '';
         if (imageObj) {
             lastModified = imageObj['last-modified'];

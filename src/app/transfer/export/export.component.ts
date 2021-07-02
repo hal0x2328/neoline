@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NeonService, GlobalService } from '@/app/core';
-import { Wallet } from '@cityofzion/neon-core/lib/wallet';
 import { MatDialog } from '@angular/material/dialog';
 import { PopupNameDialogComponent } from '@/app/popup/_dialogs';
 

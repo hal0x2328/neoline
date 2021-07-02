@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { NeonService, HttpService, GlobalService, AssetState } from '../core';
+import { NeonService, HttpService, GlobalService } from '../core';
 import { Transaction, TransactionInput } from '@cityofzion/neon-core/lib/tx';
-import { Observable, of } from 'rxjs';
-import { map, delay } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { UTXO, GAS } from '@/models/models';
 import { wallet } from '@cityofzion/neon-core';
 

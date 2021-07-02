@@ -38,7 +38,6 @@ export class AssetState {
         private chrome: ChromeService,
         private neonService: NeonService
     ) {
-        this.rpcClient = new rpc3.RPCClient(this.global.Neo3RPCDomain);
         this.chrome.getAssetFile().subscribe((res) => {
             this.assetFile = res;
         });
@@ -103,24 +102,46 @@ export class AssetState {
     }
 
     public fetchBalance(address: string): Observable<any> {
-        let getBalance = this.rpcClient.getNep17Balances(address);
         if (this.neonService.currentWalletChainType === 'Neo3') {
-            getBalance = this.rpcClient.getNep17Balances(address);
+            return this.getN3Balance(address);
         }
+        return this.http
+            .get(
+                `${this.global.apiDomain}/v1/neo2/address/assets?address=${address}`
+            )
+            .pipe(
+                map((res) => {
+                    const result = [];
+                    res.asset = res.asset || [];
+                    res.nep5 = res.nep5 || [];
+                    res.asset.forEach((item) => {
+                        result.push(item);
+                    });
+                    res.nep5.forEach((item) => {
+                        result.push(item);
+                    });
+                    return result;
+                })
+            );
+    }
+
+    public getN3Balance(address: string): Observable<any> {
+        const getBalance = this.global.rpc3.getNep17Balances(address);
         return forkJoin([getBalance]).pipe(
-            map((res) => {
+            map(async (res) => {
                 const { balance } = (res[0] as any);
-                const assets = Promise.all(balance.map(async item => {
+                const assets = await Promise.all(balance.map(async item => {
                     const { amount, assethash } = item;
-                    const symbolRes = await this.rpcClient.invokeFunction(assethash, 'symbol', []);
-                    const decimalsRes = await this.rpcClient.invokeFunction(assethash, 'decimals', []);
+                    const symbolRes = await this.global.rpc3.invokeFunction(assethash, 'symbol', []);
+                    const decimalsRes = await this.global.rpc3.invokeFunction(assethash, 'decimals', []);
                     if (symbolRes.state === 'HALT' && decimalsRes.state === 'HALT') {
                         return {
                             balance: bignumber(amount).dividedBy(bignumber(10).pow(decimalsRes.stack[0].value)).toFixed(),
                             asset_id: assethash,
                             decimals: decimalsRes.stack[0].value,
                             name: this.base64Decod(symbolRes.stack[0].value),
-                            symbol: this.base64Decod(symbolRes.stack[0].value)
+                            symbol: this.base64Decod(symbolRes.stack[0].value),
+                            type: 'nep17'
                         }
                     }
                 }));
@@ -245,9 +266,6 @@ export class AssetState {
     }
 
     public getNep5Detail(assetId: string): Observable<Nep5Detail> {
-        if (this.neonService.currentWalletChainType === 'Neo3') {
-            return this.fetchNeo3AssetDetail(assetId);
-        }
         return this.http.get(
             `${this.global.apiDomain}/v1/neo2/nep5/${assetId}`
         );
@@ -325,20 +343,6 @@ export class AssetState {
                 fast_price: bignumber(100).dividedBy(bignumber(10).pow(8)).toFixed()
             });
         });
-    }
-
-    /**
-     * 获取资产详情
-     * @param assetId 资产id
-     */
-    public fetchNeo3AssetDetail(assetId: string): Observable<any> {
-        return this.http.get(
-            `${this.global.apiDomain}/neo3/asset/${assetId}`
-        ).pipe(
-            map((res) => {
-                return this.formatResponseData(res);
-            })
-        );
     }
 
     public base64Decod(value: string): string {
