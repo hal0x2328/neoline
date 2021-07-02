@@ -74,7 +74,6 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
                     hostname: undefined,
                 };
                 this.pramsData = params;
-                this.invokeArgs = this.pramsData.invokeArgs;
                 this.pramsData.invokeArgs.forEach(item => {
                     item = this.neo3Invoke.createInvokeInputs(item);
                     this.invokeArgs.push({
