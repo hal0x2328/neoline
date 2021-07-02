@@ -59,7 +59,7 @@ export class PopupTxPageComponent implements OnInit, OnDestroy {
     public getInTransactions(page: number) {
         if (this.neon.currentWalletChainType === 'Neo3') {
             this.chrome.getTransactions().subscribe(inTxData => {
-                this.txData = inTxData[this.address].filter(item => item.asset_id === this.assetId);
+                this.txData = inTxData[this.address].filter(item => this.assetId === item.asset_id.startsWith('0x') ? item.asset_id : `0x${item.asset_id}`);
             });
             return;
         }
