@@ -288,7 +288,8 @@ export class TransferCreateComponent implements OnInit {
                 value: -this.amount,
                 block_time: new Date().getTime() / 1000,
                 asset_id: this.assetId,
-                symbol: this.chooseAsset.symbol
+                symbol: this.chooseAsset.symbol,
+                id: -1
             };
             if (this.neon.currentWalletChainType === 'Neo3') {
                 this.chrome.getTransactions().subscribe(transactions => {

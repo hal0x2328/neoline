@@ -251,7 +251,8 @@ export class PopupNoticeNeo3TransferComponent implements OnInit, AfterViewInit {
                 value: -this.amount,
                 block_time: new Date().getTime() / 1000,
                 asset_id: this.assetId,
-                symbol: this.symbol
+                symbol: this.symbol,
+                id: -1
             };
             if (this.neon.currentWalletChainType === 'Neo3') {
                 this.chrome.getTransactions().subscribe(transactions => {

@@ -179,7 +179,8 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
                         value: 0,
                         block_time: time,
                         asset_id: item.scriptHash,
-                        symbol: this.base64Decod(symbolRes.stack[0].value)
+                        symbol: this.base64Decod(symbolRes.stack[0].value),
+                        id: -1
                     };
                     this.chrome.getTransactions().subscribe(transactions => {
                         let addressTxs = transactions[address] ? transactions[address] : [];

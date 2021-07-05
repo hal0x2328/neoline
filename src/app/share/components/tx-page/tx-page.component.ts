@@ -43,7 +43,8 @@ export class PopupTxPageComponent implements OnInit, OnDestroy {
         private neon: NeonService,
         private txState: TransactionState,
         private http: HttpService,
-        private dialog: MatDialog
+        private dialog: MatDialog,
+        private transactionState: TransactionState
     ) { }
     ngOnInit(): void {
         this.net = this.global.net;
@@ -58,8 +59,10 @@ export class PopupTxPageComponent implements OnInit, OnDestroy {
 
     public getInTransactions(page: number) {
         if (this.neon.currentWalletChainType === 'Neo3') {
+            this.transactionState.updateN3transactions();
             this.chrome.getTransactions().subscribe(inTxData => {
-                this.txData = inTxData[this.address].filter(item => this.assetId === item.asset_id.startsWith('0x') ? item.asset_id : `0x${item.asset_id}`);
+                this.txData = inTxData[this.address] ?
+                    inTxData[this.address].filter(item => this.assetId === (item.asset_id.startsWith('0x') ? item.asset_id : `0x${item.asset_id}`)) : [];
             });
             return;
         }

@@ -1,14 +1,12 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { ChromeService, GlobalService, NeonService, AssetState } from './core';
+import { ChromeService, GlobalService, NeonService } from './core';
 import { MatDialog } from '@angular/material/dialog';
 import { LogoutDialog } from './+logout/logout.dialog';
 import { Wallet as Wallet2 } from '@cityofzion/neon-core/lib/wallet';
 import { Wallet as Wallet3 } from '@cityofzion/neon-core-neo3/lib/wallet';
 import { HttpClient } from '@angular/common/http';
-import { EVENT } from '@/models/dapi';
 import { PopupConfirmDialogComponent } from '@popup/_dialogs';
-import { ChainId, NetType } from './popup/_lib';
 
 @Component({
     selector: 'neo-line',

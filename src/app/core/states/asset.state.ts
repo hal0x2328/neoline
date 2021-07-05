@@ -30,7 +30,6 @@ export class AssetState {
         propose_price: '0.011',
         fast_price: '0.2',
     };
-    public rpcClient;
 
     constructor(
         private http: HttpService,

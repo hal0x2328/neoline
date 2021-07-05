@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpService } from '../services/http.service';
 import { GlobalService } from '../services/global.service';
-import { Subject, Observable, forkJoin } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NeonService } from '../services/neon.service';
-import { AssetState } from '../states/asset.state';
 import { TX_LIST_PAGE_SIZE, NEO3_CONTRACT, GAS3_CONTRACT } from '@popup/_lib';
 import { rpc as rpc3 } from '@cityofzion/neon-core-neo3';
-import { bignumber } from 'mathjs';
+import { ChromeService } from '../services/chrome.service';
 
 @Injectable()
 export class TransactionState {
@@ -20,6 +19,7 @@ export class TransactionState {
         private global: GlobalService,
         private neonService: NeonService,
         private globalService: GlobalService,
+        private chrome: ChromeService,
     ) {
         this.rpcClient = new rpc3.RPCClient(this.globalService.Neo3RPCDomain);
     }
@@ -124,5 +124,22 @@ export class TransactionState {
             );
     }
 
+    updateN3transactions() {
+        this.chrome.getWallet().subscribe(wallet => {
+            const address = wallet.accounts[0].address;
+            this.chrome.getTransactions().subscribe(transactions => {
+                transactions[address].forEach((item, index) => {
+                    if (item.id === -1 || item.id === undefined) {
+                        this.global.rpc3.getRawTransaction(item.txid, true).then(transactionDetail => {
+                            transactions[address][index].id = transactionDetail && transactionDetail.nonce ? transactionDetail.nonce : -1;
+                            this.chrome.setTransactions(transactions);
+                        }).catch(error => {
+                            console.log(error);
+                        });
+                    }
+                });
+            });
+        });
+    }
     //#endregion
 }
