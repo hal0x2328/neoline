@@ -1,10 +1,6 @@
 {
     "name": "neoline",
     "version": "3.2.1",
-    "engines": {
-        "node": "^12.10.0",
-        "npm": "~6.13.0"
-    },
     "scripts": {
         "ng": "ng",
         "initneonjs": "npm install @cityofzion/neon-js@npm:@cityofzion/neon-js@4.8.0 && npm install @cityofzion/neon-js-neo3@npm:@cityofzion/neon-js@5.0.0-next.12 && npm install @cityofzion/neon-core-neo3@npm:@cityofzion/neon-core@5.0.0-next.12",
