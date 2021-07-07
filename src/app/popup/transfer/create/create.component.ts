@@ -38,7 +38,7 @@ import { PopupTransferConfirmComponent } from '../confirm/confirm.component';
 import { bignumber } from 'mathjs';
 import { GasFeeSpeed } from '../../_lib/type';
 import { Neo3TransferService } from '../neo3-transfer.service';
-import { GAS3_CONTRACT, NEO3_MAGIC_NUMBER_TESTNET } from '../../_lib';
+import { GAS3_CONTRACT } from '../../_lib';
 
 @Component({
     templateUrl: 'create.component.html',
@@ -78,6 +78,7 @@ export class TransferCreateComponent implements OnInit {
         private txState: TransactionState,
         private neo3Transfer: Neo3TransferService,
         private assetState: AssetState,
+        private globalService: GlobalService,
     ) {
         switch(this.neon.currentWalletChainType) {
             case 'Neo2':
@@ -192,7 +193,7 @@ export class TransferCreateComponent implements OnInit {
                     tx.sign(wif);
                     break;
                 case 'Neo3':
-                    tx.sign(wif, NEO3_MAGIC_NUMBER_TESTNET);
+                    tx.sign(wif, this.globalService.n3MagicNumberTestnet);
                     break;
             }
             this.global.log('signed tx', tx);
@@ -230,7 +231,7 @@ export class TransferCreateComponent implements OnInit {
                                         res.sign(wif);
                                         break;
                                     case 'Neo3':
-                                        res.sign(wif, NEO3_MAGIC_NUMBER_TESTNET);
+                                        res.sign(wif, this.globalService.n3MagicNumberTestnet);
                                         break;
                                 }
                                 this.resolveSend(res);

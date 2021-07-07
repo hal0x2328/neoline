@@ -31,7 +31,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { PopupEditFeeDialogComponent } from '../../_dialogs';
 import { bignumber } from 'mathjs';
 import { GasFeeSpeed } from '../../_lib/type';
-import { NEO3_MAGIC_NUMBER_TESTNET } from '../../_lib';
 import { Neo3TransferService } from '../../transfer/neo3-transfer.service';
 
 @Component({
@@ -191,7 +190,7 @@ export class PopupNoticeNeo3TransferComponent implements OnInit, AfterViewInit {
                 this.neon.walletArr.findIndex(item => item.accounts[0].address === this.neon.wallet.accounts[0].address)
             ]
             try {
-                transaction.sign(wif, NEO3_MAGIC_NUMBER_TESTNET);
+                transaction.sign(wif, this.globalService.n3MagicNumberTestnet);
             } catch (error) {
                 console.log(error);
             }

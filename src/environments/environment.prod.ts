@@ -11,3 +11,8 @@ export const environment = {
     neo3MainRPC: 'https://neo3-testnet.neoline.vip',
     neo3TestRPC: 'https://neo3-testnet.neoline.vip',
 };
+
+/**
+ * @param NEO3_MAGIC_NUMBER_TESTNET Custom N3 NetworkId.
+ */
+export const NEO3_MAGIC_NUMBER_TESTNET = 844378958;
