@@ -337,9 +337,9 @@ export class AssetState {
     fetchNeo3GasFee(): Observable<any> {
         return new Observable((observer) => {
             return observer.next({
-                slow_price: bignumber(10).dividedBy(bignumber(10).pow(8)).toFixed(),
-                propose_price: bignumber(50).dividedBy(bignumber(10).pow(8)).toFixed(),
-                fast_price: bignumber(100).dividedBy(bignumber(10).pow(8)).toFixed()
+                slow_price: bignumber(100000).dividedBy(bignumber(10).pow(8)).toFixed(),
+                propose_price: bignumber(500000).dividedBy(bignumber(10).pow(8)).toFixed(),
+                fast_price: bignumber(1000000).dividedBy(bignumber(10).pow(8)).toFixed()
             });
         });
     }

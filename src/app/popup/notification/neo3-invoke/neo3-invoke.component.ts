@@ -11,7 +11,6 @@ import { GasFeeSpeed } from '../../_lib/type';
 import { bignumber } from 'mathjs';
 import { NEO3_CONTRACT } from '../../_lib';
 import { Neo3InvokeService } from '../../transfer/neo3-invoke.service';
-import { forkJoin } from 'rxjs';
 
 @Component({
     templateUrl: 'neo3-invoke.component.html',
@@ -46,6 +45,7 @@ export class PopupNoticeNeo3InvokeComponent implements OnInit {
     public totalFee;
     public totalMoney;
     public rpcClient;
+    public symbol;
 
     constructor(
         private aRoute: ActivatedRoute,
@@ -78,6 +78,9 @@ export class PopupNoticeNeo3InvokeComponent implements OnInit {
                 this.net = this.global.net;
                 this.pramsData.invokeArgs = this.neo3Invoke.createInvokeInputs(this.pramsData);
                 this.scriptHash = this.pramsData.scriptHash;
+                this.rpcClient.invokeFunction(this.scriptHash, 'symbol', []).then(res => {
+                    this.symbol =  this.assetState.base64Decod(res.stack[0].value);
+                });
                 this.invokeArgs.push({
                     ...this.neo3Invoke.createInvokeInputs(this.pramsData)
                 });
@@ -240,7 +243,8 @@ export class PopupNoticeNeo3InvokeComponent implements OnInit {
                 minFee: this.minFee
             }
         }).afterClosed().subscribe(res => {
-            if (res !== false) {
+            if (res) {
+                this.fee = res;
                 this.signTx();
             }
         })

@@ -253,7 +253,8 @@ export class PopupNoticeNeo3InvokeMultipleComponent implements OnInit {
                 minFee: this.minFee
             }
         }).afterClosed().subscribe(res => {
-            if (res !== false) {
+            if (res) {
+                this.fee = res;
                 this.signTx();
             }
         })

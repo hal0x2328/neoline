@@ -342,7 +342,12 @@ export class PopupNoticeNeo3TransferComponent implements OnInit, AfterViewInit {
             data: {
                 fee: this.fee
             }
-        }).afterClosed().subscribe(res => {})
+        }).afterClosed().subscribe(res => {
+            if (res) {
+                this.fee = res;
+                this.submit();
+            }
+        });
     }
 
     public getAddressSub(address: string) {
