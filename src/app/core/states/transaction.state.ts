@@ -128,6 +128,7 @@ export class TransactionState {
         this.chrome.getWallet().subscribe(wallet => {
             const address = wallet.accounts[0].address;
             this.chrome.getTransactions().subscribe(transactions => {
+                transactions[address] = transactions[address] ? transactions[address] : [];
                 transactions[address].forEach((item, index) => {
                     if (item.id === -1 || item.id === undefined) {
                         this.global.rpc3.getRawTransaction(item.txid, true).then(transactionDetail => {
