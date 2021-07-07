@@ -16,6 +16,11 @@ export const environment = {
     neo3TestRPC: 'https://neo3-testnet.neoline.vip',
 };
 
+/**
+ * @param NEO3_MAGIC_NUMBER_TESTNET Custom N3 NetworkId.
+ */
+export const NEO3_MAGIC_NUMBER_TESTNET = 844378958;
+
 /*
  * For easier debugging in development mode, you can import the following file
  * to ignore zone related error stack frames such as `zone.run`, `zoneDelegate.invokeTask`.

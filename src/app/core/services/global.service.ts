@@ -21,7 +21,8 @@ import {
     LoaderDialog
 } from '../dialogs/loader/loader.dialog';
 import {
-    environment
+    environment,
+    NEO3_MAGIC_NUMBER_TESTNET
 } from '@/environments/environment';
 import {
     NotificationService
@@ -45,6 +46,7 @@ export class GlobalService {
     private source404 = new Subject<string>();
     public $404 = this.source404.asObservable();
     public rpc3;
+    public n3MagicNumberTestnet;
 
     constructor(
         private matDialog: MatDialog,
@@ -69,10 +71,12 @@ export class GlobalService {
             this.apiDomain = environment.mainApiBase;
             this.RPCDomain = environment.mainRPC;
             this.Neo3RPCDomain = environment.neo3MainRPC;
+            this.n3MagicNumberTestnet = NEO3_MAGIC_NUMBER_TESTNET;
         } else {
             this.apiDomain = environment.mainApiBase;
             this.RPCDomain = environment.testRPC;
             this.Neo3RPCDomain = environment.neo3TestRPC;
+            this.n3MagicNumberTestnet = NEO3_MAGIC_NUMBER_TESTNET;
         }
         this.rpc3 = new rpc3.RPCClient(this.Neo3RPCDomain);
     }
